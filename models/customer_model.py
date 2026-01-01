@@ -1,15 +1,17 @@
 from database.db_connection import get_connection
 
-def add_customer(name,phone,address,remarks=None,image_path=None):
-    conn =get_connection()
-    cursor= conn.cursor()
 
+def add_customer(name, phone, address=None, remarks=None, image_path=None, address_id=None, village_id=None, entry_date=None):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Insert including optional address_id, village_id and entry_date (DB must be migrated)
     query = """
-    INSERT INTO customers (name, phone, address, remarks, image_path)
-    VALUES (%s, %s, %s, %s, %s)
+    INSERT INTO customers (name, phone, address, remarks, image_path, address_id, village_id, entry_date)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
     """
 
-    cursor.execute(query, (name, phone, address, remarks, image_path))
+    cursor.execute(query, (name, phone, address, remarks, image_path, address_id, village_id, entry_date))
     conn.commit()
 
     customer_id = cursor.lastrowid
@@ -21,12 +23,20 @@ def add_customer(name,phone,address,remarks=None,image_path=None):
 
 def get_all_customers():
     """
-    Fetch all customers
+    Fetch all customers (includes village name if available)
     """
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
 
-    cursor.execute("SELECT * FROM customers ORDER BY created_at DESC")
+    query = """
+    SELECT c.*, v.name AS village_name, a.address AS address_text
+    FROM customers c
+    LEFT JOIN villages v ON c.village_id = v.village_id
+    LEFT JOIN addresses a ON c.address_id = a.address_id
+    ORDER BY COALESCE(c.entry_date, c.created_at) DESC
+    """
+
+    cursor.execute(query)
     result = cursor.fetchall()
 
     cursor.close()
@@ -35,17 +45,18 @@ def get_all_customers():
     return result
 
 def get_customer_by_id(customer_id):
-    """
-    Fetch single customer by ID
-    """
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
 
-    cursor.execute(
-        "SELECT * FROM customers WHERE customer_id = %s",
-        (customer_id,)
-    )
+    query = """
+    SELECT c.*, v.name AS village_name, a.address AS address_text
+    FROM customers c
+    LEFT JOIN villages v ON c.village_id = v.village_id
+    LEFT JOIN addresses a ON c.address_id = a.address_id
+    WHERE c.customer_id = %s
+    """
 
+    cursor.execute(query, (customer_id,))
     result = cursor.fetchone()
 
     cursor.close()
@@ -53,20 +64,17 @@ def get_customer_by_id(customer_id):
 
     return result
 
-def update_customer(customer_id, name, phone, address, remarks=None):
-    """
-    Update customer details
-    """
+def update_customer(customer_id, name, phone, address=None, remarks=None, address_id=None, village_id=None, entry_date=None):
     conn = get_connection()
     cursor = conn.cursor()
 
     query = """
     UPDATE customers
-    SET name=%s, phone=%s, address=%s, remarks=%s
+    SET name=%s, phone=%s, address=%s, remarks=%s, address_id=%s, village_id=%s, entry_date=%s
     WHERE customer_id=%s
     """
 
-    cursor.execute(query, (name, phone, address, remarks, customer_id))
+    cursor.execute(query, (name, phone, address, remarks, address_id, village_id, entry_date, customer_id))
     conn.commit()
 
     cursor.close()
@@ -90,16 +98,16 @@ def delete_customer(customer_id):
 
 
 
-def insert_customer(name, phone, address, remarks):
+def insert_customer(name, phone, address, remarks, entry_date=None):
     conn = get_connection()
     cursor = conn.cursor()
 
     query = """
-    INSERT INTO customers (name, phone, address, remarks)
-    VALUES (%s, %s, %s, %s)
+    INSERT INTO customers (name, phone, address, remarks, entry_date)
+    VALUES (%s, %s, %s, %s, %s)
     """
 
-    cursor.execute(query, (name, phone, address, remarks))
+    cursor.execute(query, (name, phone, address, remarks, entry_date))
     conn.commit()
 
     cursor.close()

@@ -59,7 +59,7 @@ class ItemUI:
         self.entries["Mode"].destroy()
         self.mode_cb = ttk.Combobox(
             form,
-            values=["MONTHLY", "WEEKLY"],
+            values=["MONTHLY", "WEEKLY", "DAILY"],
             state="readonly",
             width=27
         )

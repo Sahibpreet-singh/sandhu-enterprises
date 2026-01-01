@@ -31,7 +31,7 @@ def calculate_emi(
 
 def generate_due_dates(start_date, total_installments, installment_mode):
     """
-    installment_mode: MONTHLY / WEEKLY
+    installment_mode: MONTHLY / WEEKLY / DAILY
     """
     due_dates = []
     current_date = start_date
@@ -43,5 +43,7 @@ def generate_due_dates(start_date, total_installments, installment_mode):
             current_date += relativedelta(months=1)
         elif installment_mode == "WEEKLY":
             current_date += relativedelta(weeks=1)
+        elif installment_mode == "DAILY":
+            current_date += relativedelta(days=1)
 
     return due_dates

@@ -1,8 +1,10 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from datetime import date
+from datetime import date, datetime
 
 from models.customer_model import add_customer
+from models.address_model import get_all_addresses, add_address
+from models.village_model import get_all_villages, add_village
 from models.item_model import add_item
 from models.guarantor_model import add_guarantor
 from services.emi_calculate import calculate_emi
@@ -57,13 +59,26 @@ class CustomerItemUI:
         row += 1
 
         tk.Label(form, text="Address:").grid(row=row, column=0, sticky="e")
-        self.address_entry = tk.Entry(form, width=40)
-        self.address_entry.grid(row=row, column=1, pady=2)
+        self.address_cb = ttk.Combobox(form, width=37, state="readonly")
+        self.address_cb.grid(row=row, column=1, pady=2)
+        tk.Button(form, text="Add Address", command=self.add_address_dialog).grid(row=row, column=2, padx=5)
         row += 1
 
         tk.Label(form, text="Remarks:").grid(row=row, column=0, sticky="e")
         self.remarks_entry = tk.Entry(form, width=40)
         self.remarks_entry.grid(row=row, column=1, pady=2)
+        row += 1
+
+        tk.Label(form, text="Entry Date (YYYY-MM-DD):").grid(row=row, column=0, sticky="e")
+        self.date_entry = tk.Entry(form, width=40)
+        self.date_entry.grid(row=row, column=1, pady=2)
+        self.date_entry.insert(0, date.today().isoformat())
+        row += 1
+
+        tk.Label(form, text="Village:").grid(row=row, column=0, sticky="e")
+        self.village_cb = ttk.Combobox(form, width=37, state="readonly")
+        self.village_cb.grid(row=row, column=1, pady=2)
+        tk.Button(form, text="Add Village", command=self.add_village_dialog).grid(row=row, column=2, padx=5)
         row += 1
 
         # --------- ITEM / EMI INFO ---------
@@ -76,7 +91,7 @@ class CustomerItemUI:
         for text in labels:
             tk.Label(form, text=text + ":").grid(row=row, column=0, sticky="e")
             if text == "Mode":
-                self.mode_cb = ttk.Combobox(form, values=["MONTHLY", "WEEKLY"], state="readonly", width=37)
+                self.mode_cb = ttk.Combobox(form, values=["MONTHLY", "WEEKLY", "DAILY"], state="readonly", width=37)
                 self.mode_cb.grid(row=row, column=1, pady=2)
                 self.mode_cb.set("MONTHLY")
             else:
@@ -119,11 +134,20 @@ class CustomerItemUI:
 
         self.result_label = tk.Label(form, text="", fg="green")
         self.result_label.grid(row=row, column=0, columnspan=2)
+        # populate address/village lists
+        self.load_address_village()
 
     # ================= CLEAR WINDOW =================
     def clear_window(self):
         for widget in self.window.winfo_children():
             widget.destroy()
+
+    def load_address_village(self):
+        addresses = get_all_addresses()
+        self.address_cb["values"] = [f"{a['address_id']} - {a['address']}" for a in addresses]
+
+        villages = get_all_villages()
+        self.village_cb["values"] = [f"{v['village_id']} - {v['name']}" for v in villages]
 
     # ================= EMI CALCULATION =================
     def calculate_emi(self):
@@ -138,6 +162,36 @@ class CustomerItemUI:
         except Exception:
             messagebox.showerror("Error", "Invalid item/EMI values")
 
+    def add_address_dialog(self):
+        def save():
+            text = entry.get()
+            if text:
+                add_address(text)
+                self.load_address_village()
+                dlg.destroy()
+
+        dlg = tk.Toplevel(self.window)
+        dlg.title("Add Address")
+        tk.Label(dlg, text="Address").pack()
+        entry = tk.Entry(dlg, width=50)
+        entry.pack()
+        tk.Button(dlg, text="Save", command=save).pack()
+
+    def add_village_dialog(self):
+        def save():
+            text = entry.get()
+            if text:
+                add_village(text)
+                self.load_address_village()
+                dlg.destroy()
+
+        dlg = tk.Toplevel(self.window)
+        dlg.title("Add Village")
+        tk.Label(dlg, text="Village Name").pack()
+        entry = tk.Entry(dlg, width=50)
+        entry.pack()
+        tk.Button(dlg, text="Save", command=save).pack()
+
     # ================= SAVE EVERYTHING =================
     def save_all(self):
         if not self.emi_data:
@@ -145,14 +199,53 @@ class CustomerItemUI:
             return
 
         # Save Customer
+        # parse selected address
+        address_val = self.address_cb.get()
+        address_id = None
+        address_text = None
+        if address_val:
+            parts = address_val.split(" - ", 1)
+            try:
+                address_id = int(parts[0])
+                address_text = parts[1] if len(parts) > 1 else None
+            except Exception:
+                address_text = address_val
+
+        village_val = self.village_cb.get()
+        village_id = None
+        if village_val:
+            try:
+                village_id = int(village_val.split(" - ")[0])
+            except Exception:
+                village_id = None
+
+        # Validate entry date
+        entry_date_str = None
+        entry_date_val = self.date_entry.get().strip() if hasattr(self, 'date_entry') else ''
+        if entry_date_val:
+            try:
+                datetime.strptime(entry_date_val, "%Y-%m-%d")
+                entry_date_str = entry_date_val
+            except ValueError:
+                messagebox.showerror("Error", "Entry Date must be YYYY-MM-DD")
+                return
+
         customer_id = add_customer(
             name=self.name_entry.get(),
             phone=self.phone_entry.get(),
-            address=self.address_entry.get(),
-            remarks=self.remarks_entry.get()
+            address=address_text,
+            remarks=self.remarks_entry.get(),
+            address_id=address_id,
+            village_id=village_id,
+            entry_date=entry_date_str
         )
 
         # Save Item
+        start_date = date.today()
+        if entry_date_str:
+            # Use the provided entry_date as item start_date
+            start_date = date.fromisoformat(entry_date_str)
+
         add_item(
             customer_id=customer_id,
             brand=self.entries["Brand"].get(),
@@ -166,7 +259,7 @@ class CustomerItemUI:
             installment_mode=self.mode_cb.get(),
             total_installments=int(self.entries["Installments"].get()),
             installment_amount=self.emi_data["installment_amount"],
-            start_date=date.today()
+            start_date=start_date
         )
 
         # Save Guarantors

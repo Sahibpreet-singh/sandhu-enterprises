@@ -16,7 +16,7 @@ def get_all_customer_items():
             c.customer_id,
             c.name AS customer_name,
             c.phone AS customer_phone,
-            c.address AS customer_address,
+            COALESCE(a.address, c.address) AS customer_address,
             c.remarks AS customer_remarks,
             i.brand,
             i.model,
@@ -29,12 +29,17 @@ def get_all_customer_items():
             i.total_installments,
             g.name AS guarantor_name,
             g.phone AS guarantor_phone,
-            g.address AS guarantor_address
+            g.address AS guarantor_address,
+            v.name AS village_name
         FROM customers c
         LEFT JOIN items i
             ON c.customer_id = i.customer_id
         LEFT JOIN guarantors g
             ON c.customer_id = g.customer_id
+        LEFT JOIN villages v
+            ON c.village_id = v.village_id
+        LEFT JOIN addresses a
+            ON c.address_id = a.address_id
         ORDER BY c.customer_id DESC, g.guarantor_id ASC
     """
 
