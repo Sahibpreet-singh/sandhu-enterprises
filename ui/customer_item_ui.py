@@ -59,10 +59,14 @@ class CustomerItemUI:
         row += 1
 
         tk.Label(form, text="Address:").grid(row=row, column=0, sticky="e")
-        self.address_cb = ttk.Combobox(form, width=37, state="readonly")
+        # editable so typing filters suggestions
+        self.address_cb = ttk.Combobox(form, width=37, state="normal")
         self.address_cb.grid(row=row, column=1, pady=2)
         tk.Button(form, text="Add Address", command=self.add_address_dialog).grid(row=row, column=2, padx=5)
         row += 1
+
+        # full lists for local filtering
+        self.address_full = []
 
         tk.Label(form, text="Remarks:").grid(row=row, column=0, sticky="e")
         self.remarks_entry = tk.Entry(form, width=40)
@@ -76,20 +80,42 @@ class CustomerItemUI:
         row += 1
 
         tk.Label(form, text="Village:").grid(row=row, column=0, sticky="e")
-        self.village_cb = ttk.Combobox(form, width=37, state="readonly")
+        self.village_cb = ttk.Combobox(form, width=37, state="normal")
         self.village_cb.grid(row=row, column=1, pady=2)
         tk.Button(form, text="Add Village", command=self.add_village_dialog).grid(row=row, column=2, padx=5)
         row += 1
+
+        # full lists for local filtering
+        self.village_full = []
+
+        # after creating widgets, bind key-release to filter suggestions
+        def _filter(cb, full_list):
+            val = cb.get()
+            if not val:
+                cb['values'] = full_list
+                return
+            val_l = val.strip().lower()
+            matches = [s for s in full_list if val_l in s.lower()]
+            cb['values'] = matches
+            if matches:
+                try:
+                    cb.event_generate('<Down>')
+                except Exception:
+                    pass
+
+        self.address_cb.bind('<KeyRelease>', lambda e: _filter(self.address_cb, self.address_full))
+        self.village_cb.bind('<KeyRelease>', lambda e: _filter(self.village_cb, self.village_full))
 
         # --------- ITEM / EMI INFO ---------
         tk.Label(form, text="Item / EMI Information", font=("Arial", 12, "bold")).grid(row=row, column=0, columnspan=2, pady=10)
         row += 1
 
-        labels = ["Brand", "Model", "Item Amount", "Advance", "Interest (%)", "Installments", "Mode"]
+        labels = ["Brand", "Model", "Item Amount", "Advance", "Interest", "Installments", "Mode"]
         self.entries = {}
 
+        interest_row = None
         for text in labels:
-            tk.Label(form, text=text + ":").grid(row=row, column=0, sticky="e")
+            tk.Label(form, text=text+":").grid(row=row, column=0, sticky="e")
             if text == "Mode":
                 self.mode_cb = ttk.Combobox(form, values=["MONTHLY", "WEEKLY", "DAILY"], state="readonly", width=37)
                 self.mode_cb.grid(row=row, column=1, pady=2)
@@ -98,7 +124,17 @@ class CustomerItemUI:
                 entry = tk.Entry(form, width=40)
                 entry.grid(row=row, column=1, pady=2)
                 self.entries[text] = entry
+                if text == "Interest":
+                    # remember row where Interest is placed so we can position the interest type combobox next to it
+                    interest_row = row
             row += 1
+
+        # Interest type combobox (placed next to Interest)
+        if interest_row is None:
+            interest_row = 0
+        self.interest_type_cb = ttk.Combobox(form, values=["Percent", "Amount"], state="readonly", width=10)
+        self.interest_type_cb.grid(row=interest_row, column=2, padx=5)
+        self.interest_type_cb.set("Percent")
 
         # --------- GUARANTOR INFO ---------
         tk.Label(form, text="Guarantor Information", font=("Arial", 12, "bold")).grid(row=row, column=0, columnspan=2, pady=10)
@@ -144,20 +180,24 @@ class CustomerItemUI:
 
     def load_address_village(self):
         addresses = get_all_addresses()
-        self.address_cb["values"] = [f"{a['address_id']} - {a['address']}" for a in addresses]
+        self.address_full[:] = [f"{a['address_id']} - {a['address']}" for a in addresses]
+        self.address_cb["values"] = self.address_full
 
         villages = get_all_villages()
-        self.village_cb["values"] = [f"{v['village_id']} - {v['name']}" for v in villages]
+        self.village_full[:] = [f"{v['village_id']} - {v['name']}" for v in villages]
+        self.village_cb["values"] = self.village_full
 
     # ================= EMI CALCULATION =================
     def calculate_emi(self):
         try:
             item_amount = float(self.entries["Item Amount"].get())
             advance = float(self.entries["Advance"].get())
-            interest = float(self.entries["Interest (%)"].get())
+            interest = float(self.entries["Interest"].get())
             installments = int(self.entries["Installments"].get())
 
-            self.emi_data = calculate_emi(item_amount, advance, interest, installments)
+            interest_type = self.interest_type_cb.get() or 'Percent'
+
+            self.emi_data = calculate_emi(item_amount, advance, interest, installments, interest_type=interest_type)
             self.result_label.config(text=f"EMI Amount: ₹{self.emi_data['installment_amount']}")
         except Exception:
             messagebox.showerror("Error", "Invalid item/EMI values")
@@ -255,7 +295,8 @@ class CustomerItemUI:
             item_amount=float(self.entries["Item Amount"].get()),
             advance_amount=float(self.entries["Advance"].get()),
             finance_amount=self.emi_data["finance_amount"],
-            interest_rate=float(self.entries["Interest (%)"].get()),
+            interest_rate=float(self.entries["Interest"].get()),
+            interest_type=self.interest_type_cb.get().upper(),
             installment_mode=self.mode_cb.get(),
             total_installments=int(self.entries["Installments"].get()),
             installment_amount=self.emi_data["installment_amount"],

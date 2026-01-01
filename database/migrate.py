@@ -92,6 +92,15 @@ def run_migration():
         else:
             print('Column already exists: customers.entry_date')
 
+        # Add interest_type to items if missing
+        if not column_exists(conn, 'items', 'interest_type'):
+            cur = conn.cursor()
+            cur.execute("ALTER TABLE items ADD COLUMN interest_type VARCHAR(20) DEFAULT 'PERCENT' NULL")
+            cur.close()
+            print('Added column: items.interest_type')
+        else:
+            print('Column already exists: items.interest_type')
+
         conn.commit()
     finally:
         conn.close()

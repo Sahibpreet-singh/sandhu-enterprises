@@ -42,19 +42,28 @@ class ItemUI:
             "Model",
             "Item Amount",
             "Advance",
-            "Interest (%)",
+            "Interest",
             "Installments",
             "Mode"
         ]
 
         self.entries = {}
 
+        interest_row = None
         for i, text in enumerate(labels, start=1):
             tk.Label(form, text=text, bg="white").grid(row=i, column=0, sticky="w")
             entry = tk.Entry(form, width=30)
             entry.grid(row=i, column=1, padx=5, pady=2)
             self.entries[text] = entry
+            if text == "Interest":
+                interest_row = i
 
+        # Interest type combobox (Percent / Amount) placed next to Interest entry
+        if interest_row is None:
+            interest_row = 1
+        self.interest_type_cb = ttk.Combobox(form, values=["Percent", "Amount"], state="readonly", width=8)
+        self.interest_type_cb.grid(row=interest_row, column=2, padx=4)
+        self.interest_type_cb.set("Percent")
         # -------- Mode dropdown --------
         self.entries["Mode"].destroy()
         self.mode_cb = ttk.Combobox(
@@ -113,17 +122,20 @@ class ItemUI:
         try:
             item_amount = float(self.entries["Item Amount"].get())
             advance = float(self.entries["Advance"].get())
-            interest = float(self.entries["Interest (%)"].get())
+            interest = float(self.entries["Interest"].get())
             installments = int(self.entries["Installments"].get())
 
             if advance >= item_amount:
                 raise ValueError("Advance cannot be >= item amount")
 
+            interest_type = self.interest_type_cb.get() or 'Percent'
+
             self.emi_data = calculate_emi(
                 item_amount,
                 advance,
                 interest,
-                installments
+                installments,
+                interest_type=interest_type
             )
 
             self.result_label.config(
@@ -158,11 +170,12 @@ class ItemUI:
                 item_amount=float(self.entries["Item Amount"].get()),
                 advance_amount=float(self.entries["Advance"].get()),
                 finance_amount=self.emi_data["finance_amount"],
-                interest_rate=float(self.entries["Interest (%)"].get()),
+                interest_rate=float(self.entries["Interest"].get()),
                 installment_mode=self.mode_cb.get(),
                 total_installments=int(self.entries["Installments"].get()),
                 installment_amount=self.emi_data["installment_amount"],
-                start_date=date.today()
+                start_date=date.today(),
+                interest_type=self.interest_type_cb.get().upper()
             )
 
             messagebox.showinfo("Success", "Item added successfully")

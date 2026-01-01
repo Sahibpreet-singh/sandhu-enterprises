@@ -24,7 +24,7 @@ win.entries["Brand"].insert(0, "TestBrand")
 win.entries["Model"].insert(0, "T1")
 win.entries["Item Amount"].insert(0, "10000")
 win.entries["Advance"].insert(0, "1000")
-win.entries["Interest (%)"].insert(0, "12")
+win.entries["Interest"].insert(0, "12")
 win.entries["Installments"].insert(0, "12")
 
 # Calculate EMI then Save

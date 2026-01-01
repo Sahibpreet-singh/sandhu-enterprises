@@ -29,19 +29,33 @@ def get_last_remaining_amount(item_id):
     return row[0] if row else None
 
 
+from decimal import Decimal, ROUND_HALF_UP
+
+
 def add_payment(item_id, payment_date, amount_paid, total_payable):
     """
-    Add EMI payment and update remaining balance
+    Add EMI payment and update remaining balance.
+
+    Coerce numeric values to Decimal to avoid mixing float and Decimal which
+    causes TypeError during arithmetic.
     """
     last_remaining = get_last_remaining_amount(item_id)
 
-    if last_remaining is None:
-        remaining_amount = total_payable - amount_paid
-    else:
-        remaining_amount = last_remaining - amount_paid
+    # Normalize inputs to Decimal using string conversion to avoid binary float issues
+    amount_paid_d = Decimal(str(amount_paid))
 
-    if remaining_amount < 0:
+    if last_remaining is None:
+        total_payable_d = Decimal(str(total_payable))
+        remaining = total_payable_d - amount_paid_d
+    else:
+        last_remaining_d = Decimal(str(last_remaining))
+        remaining = last_remaining_d - amount_paid_d
+
+    if remaining < Decimal('0'):
         raise Exception("Payment exceeds remaining amount")
+
+    # Round to 2 decimal places for storage/display
+    remaining = remaining.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -56,22 +70,24 @@ def add_payment(item_id, payment_date, amount_paid, total_payable):
     VALUES (%s, %s, %s, %s)
     """
 
+    # Use float for DB insertion to match existing numeric column types
     cursor.execute(query, (
         item_id,
         payment_date,
-        amount_paid,
-        remaining_amount
+        float(amount_paid_d),
+        float(remaining)
     ))
 
     conn.commit()
 
-    if remaining_amount == 0:
+    if remaining == Decimal('0.00'):
         update_item_status(item_id, "CLOSED")
 
     cursor.close()
     conn.close()
 
-    return remaining_amount
+    # Return remaining as Decimal (caller can format as needed)
+    return remaining
 
 
 def get_payments_by_item(item_id):

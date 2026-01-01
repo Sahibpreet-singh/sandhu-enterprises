@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+from datetime import date
 
 from ui.customer_item_ui import CustomerItemUI
 from models.report_model import get_all_customer_items   # ← READ DATA ONLY
@@ -42,6 +43,7 @@ class MainWindow:
             ("Customers", self.open_customers),
             ("Records", self.open_items),   # renamed logically
             ("Payments", self.open_payments),
+            ("Record Payment", self.open_record_payment),
             ("Exit", self.root.quit)
         ]
 
@@ -70,6 +72,99 @@ class MainWindow:
     def clear_content(self):
         for widget in self.content_frame.winfo_children():
             widget.destroy()
+
+    def open_record_payment(self):
+        """Open a dedicated Record Payment dialog (reusable from menu or Payments view)."""
+        dlg = tk.Toplevel(self.root)
+        dlg.title("Record Payment")
+        dlg.geometry("700x320")
+
+        tk.Label(dlg, text="Select Item (type to search by customer/name/address/item):").pack(pady=6)
+        item_cb = ttk.Combobox(dlg, width=120, state="normal")
+        item_cb.pack(pady=4)
+
+        # load items (only those with due > 0 by default)
+        from models.report_model import search_customer_items as _search_items
+        rows = _search_items({"status": "Unpaid"})
+        item_full = []
+        item_map = {}
+        for r in rows:
+            display = f"{r.get('item_id')} - {r.get('customer_name','')} - {r.get('village_name') or r.get('customer_address') or ''} - {r.get('brand') or ''} {r.get('model') or ''} - Due: {r.get('due_amount') or 0}"
+            item_full.append(display)
+            item_map[display] = r
+        item_cb['values'] = item_full
+
+        def _filter_items(event=None):
+            val = item_cb.get().strip().lower()
+            if not val:
+                item_cb['values'] = item_full
+                return
+            matches = [s for s in item_full if val in s.lower()]
+            item_cb['values'] = matches
+            if matches:
+                try:
+                    item_cb.event_generate('<Down>')
+                except Exception:
+                    pass
+
+        item_cb.bind('<KeyRelease>', _filter_items)
+
+        from decimal import Decimal
+        due_var = tk.StringVar(value="Due: -")
+        tk.Label(dlg, textvariable=due_var).pack(pady=6)
+
+        def update_due(event=None):
+            sel = item_cb.get()
+            r = item_map.get(sel)
+            if r:
+                due_var.set(f"Due: {r.get('due_amount') or 0}")
+        item_cb.bind('<<ComboboxSelected>>', update_due)
+
+        tk.Label(dlg, text="Amount Paid (₹):").pack()
+        amount_entry = tk.Entry(dlg)
+        amount_entry.pack()
+
+        tk.Label(dlg, text="Payment Date (YYYY-MM-DD):").pack()
+        date_entry = tk.Entry(dlg)
+        date_entry.insert(0, date.today().isoformat())
+        date_entry.pack()
+
+        def save_payment():
+            sel = item_cb.get()
+            r = item_map.get(sel)
+            if not r:
+                messagebox.showerror("Error", "Please select a valid item.")
+                return
+            try:
+                amt = Decimal(str(amount_entry.get()))
+            except Exception:
+                messagebox.showerror("Error", "Invalid amount.")
+                return
+            due = r.get('due_amount') or 0
+            due_d = Decimal(str(due))
+            if amt <= 0 or amt > due_d:
+                messagebox.showerror("Error", f"Amount must be >0 and <= due ({due_d})")
+                return
+            payment_date = date_entry.get().strip()
+            try:
+                # basic date format check
+                if payment_date:
+                    from datetime import datetime as _dt
+                    _dt.strptime(payment_date, '%Y-%m-%d')
+            except ValueError:
+                messagebox.showerror("Error", "Payment date must be YYYY-MM-DD")
+                return
+            from models.payment_model import add_payment
+            remaining = add_payment(r.get('item_id'), payment_date, amt, r.get('item_amount'))
+            messagebox.showinfo("Success", f"Payment recorded. Remaining: {remaining}")
+            dlg.destroy()
+            # Refresh payments view if visible
+            try:
+                self.open_payments()
+            except Exception:
+                pass
+
+        tk.Button(dlg, text="Save Payment", bg="#27ae60", fg="white", command=save_payment).pack(pady=10)
 
     # ================= CUSTOMERS =================
     def open_customers(self):
@@ -302,7 +397,9 @@ class MainWindow:
                 ("Item Amount", data.get("item_amount")),
                 ("Advance", data.get("advance_amount")),
                 ("Finance", data.get("finance_amount")),
-                ("Interest (%)", data.get("interest_rate")),
+                ("Interest (%)", (f"{data.get('interest_rate')}%" if ((data.get('interest_type','PERCENT') or '').upper().startswith('P')) else f"{data.get('interest_rate')} (amt)")),
+                ("Interest Type", (data.get('interest_type') or '').upper()),
+
                 ("Installment Amount", data.get("installment_amount")),
                 ("Installment Mode", data.get("installment_mode")),
                 ("Total Installments", data.get("total_installments")),
@@ -354,6 +451,32 @@ class MainWindow:
             except Exception:
                 pass
 
+            # Payment history section
+            try:
+                item_id = data.get('item_id')
+                from models.payment_model import get_payments_by_item
+
+                tk.Label(inner, text="Payment History", font=("Segoe UI", 12, "bold"), bg="#ffffff").grid(row=rows*2+2, column=0, columnspan=4, sticky="w", padx=12, pady=(12,4))
+
+                payments = []
+                if item_id:
+                    payments = get_payments_by_item(item_id)
+
+                if payments:
+                    ph_cols = ["Date", "Amount Paid", "Remaining"]
+                    ph_tree = ttk.Treeview(inner, columns=ph_cols, show="headings", height=6)
+                    for pc in ph_cols:
+                        ph_tree.heading(pc, text=pc)
+                        ph_tree.column(pc, width=140, anchor="center")
+                    ph_tree.grid(row=rows*2+3, column=0, columnspan=4, sticky="we", padx=12, pady=(4,12))
+                    for p in payments:
+                        ph_tree.insert("", "end", values=[p.get('payment_date'), p.get('amount_paid'), p.get('remaining_amount')])
+                else:
+                    tk.Label(inner, text="No payment history.", fg="#666", bg="#ffffff").grid(row=rows*2+3, column=0, columnspan=4, sticky="w", padx=12, pady=(4,12))
+            except Exception:
+                # non-fatal: if payments fetch fails, quietly skip
+                pass
+
             # Bottom action bar with Close
             action_bar = tk.Frame(dlg, bg="#ffffff")
             action_bar.pack(fill=tk.X)
@@ -398,17 +521,73 @@ class MainWindow:
         name_entry.grid(row=0, column=1, padx=5, pady=5)
 
         tk.Label(filter_frame, text="Village:", bg="white").grid(row=0, column=2, padx=5, pady=5, sticky="e")
-        village_entry = tk.Entry(filter_frame)
-        village_entry.grid(row=0, column=3, padx=5, pady=5)
+        # make combobox editable so typing filters suggestions
+        village_cb = ttk.Combobox(filter_frame, width=30, state="normal")
+        village_cb.grid(row=0, column=3, padx=5, pady=5)
 
-        tk.Label(filter_frame, text="Item:", bg="white").grid(row=0, column=4, padx=5, pady=5, sticky="e")
+        tk.Label(filter_frame, text="Address:", bg="white").grid(row=0, column=4, padx=5, pady=5, sticky="e")
+        address_cb = ttk.Combobox(filter_frame, width=40, state="normal")
+        address_cb.grid(row=0, column=5, padx=5, pady=5)
+
+        # store full lists so we can filter locally
+        village_full = []
+        address_full = []
+
+        def load_address_village():
+            from models.village_model import get_all_villages
+            from models.address_model import get_all_addresses
+            villages = get_all_villages()
+            village_full[:] = [f"{v['village_id']} - {v['name']}" for v in villages]
+            village_cb["values"] = village_full
+            addresses = get_all_addresses()
+            address_full[:] = [f"{a['address_id']} - {a['address']}" for a in addresses]
+            address_cb["values"] = address_full
+
+        def _filter_combobox(cb, full_list, event=None):
+            val = cb.get()
+            if not val:
+                cb['values'] = full_list
+                return
+            val_l = val.strip().lower()
+            matches = [s for s in full_list if val_l in s.lower()]
+            cb['values'] = matches
+            if matches:
+                try:
+                    # open dropdown to show suggestions
+                    cb.event_generate('<Down>')
+                except Exception:
+                    pass
+
+        # bind typing events to filter suggestions
+        village_cb.bind('<KeyRelease>', lambda e: _filter_combobox(village_cb, village_full, e))
+        address_cb.bind('<KeyRelease>', lambda e: _filter_combobox(address_cb, address_full, e))
+
+        load_address_village()
+
+        tk.Label(filter_frame, text="Item:", bg="white").grid(row=1, column=0, padx=5, pady=5, sticky="e")
         item_entry = tk.Entry(filter_frame)
-        item_entry.grid(row=0, column=5, padx=5, pady=5)
+        item_entry.grid(row=1, column=1, padx=5, pady=5)
 
-        tk.Label(filter_frame, text="Paid Status:", bg="white").grid(row=0, column=6, padx=5, pady=5, sticky="e")
+        tk.Label(filter_frame, text="Paid Status:", bg="white").grid(row=1, column=2, padx=5, pady=5, sticky="e")
         status_cb = ttk.Combobox(filter_frame, values=["All", "Paid", "Unpaid"], state="readonly", width=10)
-        status_cb.grid(row=0, column=7, padx=5, pady=5)
+        status_cb.grid(row=1, column=3, padx=5, pady=5)
         status_cb.set("All")
+
+        tk.Label(filter_frame, text="Due Min:", bg="white").grid(row=1, column=4, padx=5, pady=5, sticky="e")
+        due_min_entry = tk.Entry(filter_frame, width=10)
+        due_min_entry.grid(row=1, column=5, padx=5, pady=5)
+
+        tk.Label(filter_frame, text="Due Max:", bg="white").grid(row=1, column=6, padx=5, pady=5, sticky="e")
+        due_max_entry = tk.Entry(filter_frame, width=10)
+        due_max_entry.grid(row=1, column=7, padx=5, pady=5)
+
+        tk.Label(filter_frame, text="From Date (YYYY-MM-DD):", bg="white").grid(row=2, column=0, padx=5, pady=5, sticky="e")
+        from_date_entry = tk.Entry(filter_frame)
+        from_date_entry.grid(row=2, column=1, padx=5, pady=5)
+
+        tk.Label(filter_frame, text="To Date (YYYY-MM-DD):", bg="white").grid(row=2, column=2, padx=5, pady=5, sticky="e")
+        to_date_entry = tk.Entry(filter_frame)
+        to_date_entry.grid(row=2, column=3, padx=5, pady=5)
 
         # ========== Table Frame ==========
         table_frame = tk.Frame(self.content_frame)
@@ -440,37 +619,73 @@ class MainWindow:
         from models.report_model import get_all_customer_items  # You can modify this to include payment info
 
         def search_records():
-            # Fetch all customer items
-            rows = get_all_customer_items()  # Ideally add village/payment data in your query
+            # Build filter dict from UI inputs
+            # extract village name/address from combobox value 'id - name'
+            village_val = village_cb.get().strip()
+            if village_val:
+                parts = village_val.split(" - ", 1)
+                village_filter = parts[1] if len(parts) > 1 else parts[0]
+            else:
+                village_filter = None
+
+            address_val = address_cb.get().strip()
+            if address_val:
+                parts = address_val.split(" - ", 1)
+                address_filter = parts[1] if len(parts) > 1 else parts[0]
+            else:
+                address_filter = None
+
+            filters = {
+                "name": name_entry.get().strip() or None,
+                "village": village_filter,
+                "address": address_filter,
+                "item": item_entry.get().strip() or None,
+                "status": status_cb.get() if status_cb.get() != "All" else None,
+            }
+
+            # parse due min/max as floats if provided
+            try:
+                due_min = due_min_entry.get().strip()
+                filters["due_min"] = float(due_min) if due_min else None
+            except ValueError:
+                filters["due_min"] = None
+
+            try:
+                due_max = due_max_entry.get().strip()
+                filters["due_max"] = float(due_max) if due_max else None
+            except ValueError:
+                filters["due_max"] = None
+
+            # date filters (no validation here; DB expects YYYY-MM-DD)
+            payment_from = from_date_entry.get().strip()
+            payment_to = to_date_entry.get().strip()
+            if payment_from:
+                filters["payment_from"] = payment_from
+            if payment_to:
+                filters["payment_to"] = payment_to
+
+            # Call model search that performs SQL-level filtering (efficient)
+            from models.report_model import search_customer_items
+            rows = search_customer_items(filters)
 
             # Clear existing
             for i in tree.get_children():
                 tree.delete(i)
 
             for row in rows:
-                # Filtering
-                if name_entry.get() and name_entry.get().lower() not in row.get("customer_name", "").lower():
-                    continue
-                if village_entry.get() and village_entry.get().lower() not in (row.get("village_name", "") or "").lower():
-                    continue
-                if item_entry.get() and item_entry.get().lower() not in row.get("brand", "").lower():
-                    continue
-                paid_status = row.get("paid_status", "Unpaid")  # adjust field name as per your DB
-                if status_cb.get() != "All" and status_cb.get() != paid_status:
-                    continue
-
+                paid_status = row.get("paid_status", "Unpaid")
                 tree.insert(
                     "",
                     "end",
                     values=[
                         row.get("customer_id") or "",
                         row.get("customer_name") or "",
-                        row["customer_phone"],
+                        row.get("customer_phone") or "",
                         row.get("village_name") or row.get("customer_address") or "",
-                        row.get("brand") or "",
+                        f"{row.get('brand') or ''} {row.get('model') or ''}".strip(),
                         row.get("item_amount") or "",
-                        row.get("paid_amount") or "",
-                        row.get("due_amount") or "",
+                        row.get("total_paid") or 0,
+                        row.get("due_amount") or 0,
                         row.get("installment_mode") or "",
                         row.get("total_installments") or "",
                         paid_status
@@ -487,6 +702,15 @@ class MainWindow:
             font=("Arial", 10, "bold"),
             command=search_records
         ).grid(row=0, column=8, padx=10)
+
+        tk.Button(
+            filter_frame,
+            text="💸 Record Payment",
+            bg="#27ae60",
+            fg="white",
+            font=("Arial", 10, "bold"),
+            command=lambda: self.open_record_payment()
+        ).grid(row=0, column=9, padx=10)
 
         # Initial load
         search_records()

@@ -25,16 +25,40 @@ class AddCustomerWindow:
         self.phone_entry.pack()
 
         tk.Label(self.win, text="Address").pack()
-        self.address_cb = ttk.Combobox(self.win, width=40, state="readonly")
+        # editable so typing shows suggestions
+        self.address_cb = ttk.Combobox(self.win, width=40, state="normal")
         self.address_cb.pack()
         tk.Button(self.win, text="Add Address", command=self.add_address_dialog).pack(pady=2)
 
         tk.Label(self.win, text="Village").pack()
-        self.village_cb = ttk.Combobox(self.win, width=40, state="readonly")
+        self.village_cb = ttk.Combobox(self.win, width=40, state="normal")
         self.village_cb.pack()
         tk.Button(self.win, text="Add Village", command=self.add_village_dialog).pack(pady=2)
 
+        # store full lists for filtering
+        self.address_full = []
+        self.village_full = []
+
         self.load_address_village()
+
+        # local filter function for suggestions
+        def _filter(cb, full_list):
+            val = cb.get()
+            if not val:
+                cb['values'] = full_list
+                return
+            val_l = val.strip().lower()
+            matches = [s for s in full_list if val_l in s.lower()]
+            cb['values'] = matches
+            if matches:
+                try:
+                    cb.event_generate('<Down>')
+                except Exception:
+                    pass
+
+        # bind key release to filter suggestions
+        self.address_cb.bind('<KeyRelease>', lambda e: _filter(self.address_cb, self.address_full))
+        self.village_cb.bind('<KeyRelease>', lambda e: _filter(self.village_cb, self.village_full))
 
         tk.Label(self.win, text="Remarks").pack()
         self.remarks_entry = tk.Entry(self.win)
@@ -106,10 +130,12 @@ class AddCustomerWindow:
     def load_address_village(self):
         # Populate address combobox
         addresses = get_all_addresses()
-        self.address_cb["values"] = [f"{a['address_id']} - {a['address']}" for a in addresses]
+        self.address_full[:] = [f"{a['address_id']} - {a['address']}" for a in addresses]
+        self.address_cb["values"] = self.address_full
 
         villages = get_all_villages()
-        self.village_cb["values"] = [f"{v['village_id']} - {v['name']}" for v in villages]
+        self.village_full[:] = [f"{v['village_id']} - {v['name']}" for v in villages]
+        self.village_cb["values"] = self.village_full
 
     def add_address_dialog(self):
         def save():

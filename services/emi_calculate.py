@@ -5,17 +5,25 @@ from dateutil.relativedelta import relativedelta
 def calculate_emi(
     item_amount,
     advance_amount,
-    interest_rate,
-    total_installments
+    interest_value,
+    total_installments,
+    interest_type='percent'
 ):
     """
     Returns:
     finance_amount, total_interest, total_payable, installment_amount
+
+    interest_type: 'percent' or 'amount'
+    interest_value: if percent -> percentage (e.g., 10 for 10%), if amount -> absolute amount
     """
 
     finance_amount = item_amount - advance_amount
 
-    total_interest = finance_amount * (interest_rate / 100)
+    if str(interest_type).lower().startswith('percent'):
+        total_interest = finance_amount * (interest_value / 100)
+    else:
+        # absolute amount
+        total_interest = float(interest_value)
 
     total_payable = finance_amount + total_interest
 
