@@ -14,26 +14,27 @@ class AddCustomerWindow:
     def __init__(self, parent):
         self.win = tk.Toplevel(parent)
         self.win.title("Add Customer")
-        self.win.geometry("400x400")
+        self.win.geometry("450x500")
+        self.win.configure(bg="#f5f7fa")
 
-        tk.Label(self.win, text="Name").pack()
-        self.name_entry = tk.Entry(self.win)
-        self.name_entry.pack()
+        tk.Label(self.win, text="Name", font=("Arial", 12), bg="#f5f7fa", fg="#2c3e50").pack(pady=5)
+        self.name_entry = tk.Entry(self.win, font=("Arial", 12), width=40)
+        self.name_entry.pack(pady=5)
 
-        tk.Label(self.win, text="Phone").pack()
-        self.phone_entry = tk.Entry(self.win)
-        self.phone_entry.pack()
+        tk.Label(self.win, text="Phone", font=("Arial", 12), bg="#f5f7fa", fg="#2c3e50").pack(pady=5)
+        self.phone_entry = tk.Entry(self.win, font=("Arial", 12), width=40)
+        self.phone_entry.pack(pady=5)
 
-        tk.Label(self.win, text="Address").pack()
+        tk.Label(self.win, text="Address", font=("Arial", 12), bg="#f5f7fa", fg="#2c3e50").pack(pady=5)
         # editable so typing shows suggestions
-        self.address_cb = ttk.Combobox(self.win, width=40, state="normal")
-        self.address_cb.pack()
-        tk.Button(self.win, text="Add Address", command=self.add_address_dialog).pack(pady=2)
+        self.address_cb = ttk.Combobox(self.win, width=40, state="normal", font=("Arial", 12))
+        self.address_cb.pack(pady=5)
+        tk.Button(self.win, text="Add Address", command=self.add_address_dialog, font=("Arial", 10, "bold"), bg="#3498db", fg="white").pack(pady=5)
 
-        tk.Label(self.win, text="Village").pack()
-        self.village_cb = ttk.Combobox(self.win, width=40, state="normal")
-        self.village_cb.pack()
-        tk.Button(self.win, text="Add Village", command=self.add_village_dialog).pack(pady=2)
+        tk.Label(self.win, text="Village", font=("Arial", 12), bg="#f5f7fa", fg="#2c3e50").pack(pady=5)
+        self.village_cb = ttk.Combobox(self.win, width=40, state="normal", font=("Arial", 12))
+        self.village_cb.pack(pady=5)
+        tk.Button(self.win, text="Add Village", command=self.add_village_dialog, font=("Arial", 10, "bold"), bg="#3498db", fg="white").pack(pady=5)
 
         # store full lists for filtering
         self.address_full = []

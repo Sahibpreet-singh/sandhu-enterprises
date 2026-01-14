@@ -45,7 +45,7 @@ class CustomerItemUI:
         self.form_frame = form
 
         # --------- CUSTOMER INFO ---------
-        tk.Label(form, text="Customer Information", font=("Arial", 12, "bold")).grid(row=row, column=0, columnspan=2, pady=5)
+        tk.Label(form, text="Customer Information", font=("Arial", 14, "bold"), bg="#f5f7fa", fg="#2c3e50").grid(row=row, column=0, columnspan=2, pady=10)
         row += 1
 
         tk.Label(form, text="Name:").grid(row=row, column=0, sticky="e")
@@ -107,7 +107,7 @@ class CustomerItemUI:
         self.village_cb.bind('<KeyRelease>', lambda e: _filter(self.village_cb, self.village_full))
 
         # --------- ITEM / EMI INFO ---------
-        tk.Label(form, text="Item / EMI Information", font=("Arial", 12, "bold")).grid(row=row, column=0, columnspan=2, pady=10)
+        tk.Label(form, text="Item / EMI Information", font=("Arial", 14, "bold"), bg="#f5f7fa", fg="#2c3e50").grid(row=row, column=0, columnspan=2, pady=10)
         row += 1
 
         labels = ["Brand", "Model", "Item Amount", "Advance", "Interest", "Installments", "Mode"]
@@ -164,8 +164,8 @@ class CustomerItemUI:
             })
 
         # --------- BUTTONS ---------
-        tk.Button(form, text="Calculate EMI", command=self.calculate_emi).grid(row=row, column=0, pady=10)
-        tk.Button(form, text="Save All", command=self.save_all).grid(row=row, column=1, pady=10)
+        tk.Button(form, text="Calculate EMI", command=self.calculate_emi, font=("Arial", 12, "bold"), bg="#3498db", fg="white", width=15, height=2).grid(row=row, column=0, pady=10)
+        tk.Button(form, text="Save All", command=self.save_all, font=("Arial", 12, "bold"), bg="#2ecc71", fg="white", width=15, height=2).grid(row=row, column=1, pady=10)
         row += 1
 
         self.result_label = tk.Label(form, text="", fg="green")

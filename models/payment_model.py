@@ -108,3 +108,47 @@ def get_payments_by_item(item_id):
     conn.close()
 
     return result
+
+
+def get_all_payments(filters=None):
+    """
+    Fetch all payment rows joined with item and customer details.
+    Optional filters: payment_from, payment_to, customer_name, item_id
+    Returns list of dict rows (dictionary=True)
+    """
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    query = """
+    SELECT p.*, i.brand, i.model, i.item_amount, i.customer_id,
+           c.name AS customer_name, c.phone AS customer_phone, c.address AS customer_address
+    FROM payments p
+    JOIN items i ON p.item_id = i.item_id
+    LEFT JOIN customers c ON i.customer_id = c.customer_id
+    WHERE 1=1
+    """
+
+    params = []
+    if filters:
+        if filters.get("payment_from"):
+            query += " AND p.payment_date >= %s"
+            params.append(filters["payment_from"])
+        if filters.get("payment_to"):
+            query += " AND p.payment_date <= %s"
+            params.append(filters["payment_to"])
+        if filters.get("customer_name"):
+            query += " AND c.name LIKE %s"
+            params.append(f"%{filters['customer_name']}%")
+        if filters.get("item_id"):
+            query += " AND p.item_id = %s"
+            params.append(filters["item_id"])
+
+    query += " ORDER BY p.payment_date DESC"
+
+    cursor.execute(query, tuple(params))
+    result = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return result

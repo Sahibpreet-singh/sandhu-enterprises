@@ -22,12 +22,15 @@ class ItemUI:
         form = tk.LabelFrame(
             self.frame,
             text="Add Item (EMI)",
-            font=("Arial", 12, "bold"),
-            bg="white",
-            padx=10,
-            pady=10
+            font=("Arial", 14, "bold"),
+            bg="#f5f7fa",
+            fg="#2c3e50",
+            padx=15,
+            pady=15,
+            relief="solid",
+            bd=2
         )
-        form.pack(fill=tk.X, padx=10, pady=10)
+        form.pack(fill=tk.X, padx=15, pady=15)
 
         # -------- Customer --------
         tk.Label(form, text="Customer", bg="white").grid(row=0, column=0, sticky="w")
@@ -76,13 +79,16 @@ class ItemUI:
         self.mode_cb.set("MONTHLY")
 
         # -------- Buttons --------
-        btn_frame = tk.Frame(form, bg="white")
+        btn_frame = tk.Frame(form, bg="#f5f7fa")
         btn_frame.grid(row=8, column=0, columnspan=2, pady=10)
 
         tk.Button(
             btn_frame,
             text="Calculate EMI",
             width=15,
+            font=("Arial", 12, "bold"),
+            bg="#3498db",
+            fg="white",
             command=self.calculate
         ).pack(side=tk.LEFT, padx=5)
 
@@ -90,7 +96,8 @@ class ItemUI:
             btn_frame,
             text="Save Item",
             width=15,
-            bg="#27ae60",
+            font=("Arial", 12, "bold"),
+            bg="#2ecc71",
             fg="white",
             command=self.save_item
         ).pack(side=tk.LEFT, padx=5)
@@ -99,6 +106,9 @@ class ItemUI:
             btn_frame,
             text="Clear",
             width=10,
+            font=("Arial", 12, "bold"),
+            bg="#e74c3c",
+            fg="white",
             command=self.clear_form
         ).pack(side=tk.LEFT, padx=5)
 

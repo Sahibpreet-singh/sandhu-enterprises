@@ -1,6 +1,7 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, simpledialog
 from datetime import date
+from ui.login_ui import SUPERADMIN_PASSWORD
 
 from ui.customer_item_ui import CustomerItemUI
 from models.report_model import get_all_customer_items   # ← READ DATA ONLY
@@ -25,49 +26,248 @@ class MainWindow:
 
     # ================= HEADER =================
     def create_header(self):
+        header_frame = tk.Frame(self.root, bg="#34495e")
+        header_frame.pack(fill=tk.X)
+
         tk.Label(
-            self.root,
-            text="Sandhu Enterprises – EMI Management System",
+            header_frame,
+            text="🏢 Sandhu Enterprises",
             font=("Arial", 18, "bold"),
-            bg="#2c3e50",
+            bg="#34495e",
+            fg="white",
+            pady=10
+        ).pack(side=tk.LEFT, padx=20)
+
+        tk.Label(
+            header_frame,
+            text="EMI Management System",
+            font=("Arial", 14),
+            bg="#34495e",
+            fg="#bdc3c7",
+            pady=10
+        ).pack(side=tk.LEFT, padx=10)
+
+        # User info
+        user_text = f"👤 {self.user.get('username', 'User')}" if self.user else "👤 Guest"
+        tk.Label(
+            header_frame,
+            text=user_text,
+            font=("Arial", 10),
+            bg="#34495e",
+            fg="#ecf0f1",
+            pady=10
+        ).pack(side=tk.RIGHT, padx=20)
+
+    # ================= LEFT MENU =================
+    def create_menu(self):
+        menu_frame = tk.Frame(self.root, bg="#34495e", width=220)
+        menu_frame.pack(side=tk.LEFT, fill=tk.Y)
+
+        # Menu title
+        tk.Label(
+            menu_frame,
+            text="📋 Menu",
+            font=("Arial", 14, "bold"),
+            bg="#34495e",
             fg="white",
             pady=10
         ).pack(fill=tk.X)
 
-    # ================= LEFT MENU =================
-    def create_menu(self):
-        menu_frame = tk.Frame(self.root, bg="#ecf0f1", width=200)
-        menu_frame.pack(side=tk.LEFT, fill=tk.Y)
-
         buttons = [
-            ("Customers", self.open_customers),
-            ("Records", self.open_items),   # renamed logically
-            ("Payments", self.open_payments),
-            ("Record Payment", self.open_record_payment),
-            ("Exit", self.root.quit)
+            ("👥 Customers", self.open_customers),
+            ("📊 Records", self.open_items),   # renamed logically
+            ("💰 Payments", self.open_payments),
+            ("➕ Record Payment", self.open_record_payment),
+            ("🚪 Exit", self.root.quit)
         ]
 
         for text, command in buttons:
-            tk.Button(
+            btn = tk.Button(
                 menu_frame,
                 text=text,
-                font=("Arial", 12),
-                width=18,
-                pady=8,
+                font=("Arial", 11, "bold"),
+                width=20,
+                pady=12,
+                bg="#3498db",
+                fg="white",
+                activebackground="#2980b9",
+                activeforeground="white",
+                relief="flat",
+                borderwidth=0,
                 command=command
-            ).pack(pady=5)
+            )
+            btn.pack(pady=8, padx=10)
+            # Hover effect
+            btn.bind("<Enter>", lambda e, b=btn: b.config(bg="#2980b9"))
+            btn.bind("<Leave>", lambda e, b=btn: b.config(bg="#3498db"))
 
     # ================= MAIN CONTENT =================
     def create_content_area(self):
-        self.content_frame = tk.Frame(self.root, bg="white")
+        self.content_frame = tk.Frame(self.root, bg="#f8f9fa")
         self.content_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
 
+        # Welcome container
+        welcome_frame = tk.Frame(self.content_frame, bg="#f8f9fa")
+        welcome_frame.pack(expand=True)
+
+        # Main welcome title
         tk.Label(
-            self.content_frame,
-            text="Welcome to Sandhu Enterprises EMI System",
-            font=("Arial", 16),
-            bg="white"
-        ).pack(expand=True)
+            welcome_frame,
+            text="🏢 Welcome to Sandhu Enterprises",
+            font=("Arial", 24, "bold"),
+            fg="#2c3e50",
+            bg="#f8f9fa"
+        ).pack(pady=(20, 5))
+
+        tk.Label(
+            welcome_frame,
+            text="EMI Management System",
+            font=("Arial", 18),
+            fg="#34495e",
+            bg="#f8f9fa"
+        ).pack(pady=(0, 20))
+
+        # Description
+        tk.Label(
+            welcome_frame,
+            text="Manage customers, items, payments, and installments efficiently.\nSelect an option from the menu to get started.",
+            font=("Arial", 12),
+            fg="#7f8c8d",
+            bg="#f8f9fa",
+            justify="center"
+        ).pack(pady=(0, 10))
+
+        # Current Date
+        from datetime import date
+        current_date = date.today().strftime("%B %d, %Y")
+        tk.Label(
+            welcome_frame,
+            text=f"Today: {current_date}",
+            font=("Arial", 10, "italic"),
+            fg="#34495e",
+            bg="#f8f9fa"
+        ).pack(pady=(0, 20))
+
+        # Quick Actions
+        actions_frame = tk.Frame(welcome_frame, bg="#f8f9fa")
+        actions_frame.pack(pady=(10, 20))
+
+        tk.Label(
+            actions_frame,
+            text="Quick Actions",
+            font=("Arial", 14, "bold"),
+            fg="#2c3e50",
+            bg="#f8f9fa"
+        ).pack(pady=(0, 10))
+
+        actions = [
+            ("➕ Add Customer", self.add_customer),
+            ("💰 Record Payment", self.open_record_payment),
+            ("📊 View Records", self.open_items),
+            ("🔍 Search Payments", self.open_payments)
+        ]
+
+        for text, command in actions:
+            btn = tk.Button(
+                actions_frame,
+                text=text,
+                font=("Arial", 11, "bold"),
+                width=18,
+                pady=8,
+                bg="#3498db",
+                fg="white",
+                activebackground="#2980b9",
+                activeforeground="white",
+                relief="raised",
+                borderwidth=2,
+                command=command
+            )
+            btn.pack(side=tk.LEFT, padx=10)
+            # Hover effect
+            btn.bind("<Enter>", lambda e, b=btn: b.config(bg="#2980b9"))
+            btn.bind("<Leave>", lambda e, b=btn: b.config(bg="#3498db"))
+
+        # Quick Stats Dashboard
+        stats_frame = tk.Frame(welcome_frame, bg="#f8f9fa")
+        stats_frame.pack(pady=(10, 20))
+
+        # Store stat labels for refresh
+        self.stat_labels = []
+
+        # Get stats
+        try:
+            from models.customer_model import get_total_customers
+            from models.item_model import get_total_items
+            from models.payment_model import get_total_payments, get_total_due
+            total_customers = get_total_customers()
+            total_items = get_total_items()
+            total_payments = get_total_payments()
+            total_due = get_total_due()
+        except Exception:
+            total_customers = total_items = total_payments = total_due = 0
+
+        stats = [
+            ("👥 Total Customers", total_customers, "#3498db"),
+            ("📦 Total Items", total_items, "#e74c3c"),
+            ("💰 Total Payments", f"₹{total_payments:,.0f}", "#27ae60"),
+            ("📊 Total Due", f"₹{total_due:,.0f}", "#f39c12")
+        ]
+
+        for i, (label, value, color) in enumerate(stats):
+            stat_card = tk.Frame(stats_frame, bg=color, bd=2, relief="raised")
+            stat_card.grid(row=0, column=i, padx=10, pady=5, ipadx=20, ipady=10)
+
+            tk.Label(
+                stat_card,
+                text=label,
+                font=("Arial", 10, "bold"),
+                fg="white",
+                bg=color
+            ).pack()
+
+            value_label = tk.Label(
+                stat_card,
+                text=str(value),
+                font=("Arial", 16, "bold"),
+                fg="white",
+                bg=color
+            )
+            value_label.pack()
+            self.stat_labels.append(value_label)
+
+        # Refresh button
+        tk.Button(
+            welcome_frame,
+            text="🔄 Refresh Stats",
+            font=("Arial", 10),
+            bg="#95a5a6",
+            fg="white",
+            command=self.refresh_welcome_stats
+        ).pack(pady=(10, 0))
+
+    def refresh_welcome_stats(self):
+        """Refresh the stats displayed on the welcome screen."""
+        try:
+            from models.customer_model import get_total_customers
+            from models.item_model import get_total_items
+            from models.payment_model import get_total_payments, get_total_due
+            total_customers = get_total_customers()
+            total_items = get_total_items()
+            total_payments = get_total_payments()
+            total_due = get_total_due()
+        except Exception:
+            total_customers = total_items = total_payments = total_due = 0
+
+        stats = [
+            total_customers,
+            total_items,
+            f"₹{total_payments:,.0f}",
+            f"₹{total_due:,.0f}"
+        ]
+
+        for i, value in enumerate(stats):
+            if i < len(self.stat_labels):
+                self.stat_labels[i].config(text=str(value))
 
     def clear_content(self):
         for widget in self.content_frame.winfo_children():
@@ -89,7 +289,10 @@ class MainWindow:
         item_full = []
         item_map = {}
         for r in rows:
-            display = f"{r.get('item_id')} - {r.get('customer_name','')} - {r.get('village_name') or r.get('customer_address') or ''} - {r.get('brand') or ''} {r.get('model') or ''} - Due: {r.get('due_amount') or 0}"
+            # show village and address together so address is always visible
+            loc_parts = [p for p in (r.get('village_name'), r.get('customer_address')) if p]
+            location = " / ".join(loc_parts)
+            display = f"{r.get('item_id')} - {r.get('customer_name','')} - {location} - {r.get('brand') or ''} {r.get('model') or ''} - Due: {r.get('due_amount') or 0}"
             item_full.append(display)
             item_map[display] = r
         item_cb['values'] = item_full
@@ -418,69 +621,293 @@ class MainWindow:
             inner.grid_columnconfigure(1, weight=1)
             inner.grid_columnconfigure(3, weight=1)
 
-            rows = max(len(left_fields), len(right_fields))
-            for i in range(rows):
-                # Left column
-                if i < len(left_fields):
-                    label_l, val_l = left_fields[i]
-                    tk.Label(inner, text=f"{label_l}:", anchor="e", width=18, font=("Segoe UI", 10, "bold"), bg="#ffffff").grid(row=i*2, column=0, sticky="e", padx=12, pady=(8,2))
-                    val_lbl_l = tk.Label(inner, text=str(val_l) if val_l is not None else "", anchor="w", justify="left", wraplength=320, font=("Segoe UI", 10), bg="#ffffff", bd=1, relief="groove")
-                    val_lbl_l.grid(row=i*2, column=1, sticky="we", padx=6, pady=(8,2))
-                else:
-                    # empty cells to keep alignment
-                    tk.Label(inner, text="", bg="#ffffff").grid(row=i*2, column=0)
-                    tk.Label(inner, text="", bg="#ffffff").grid(row=i*2, column=1)
+            # Prepare interest values: show either percent or amount in separate fields
+            interest_val = data.get('interest_rate')
+            interest_type = (data.get('interest_type') or '').upper()
+            interest_percent = f"{interest_val}%" if interest_val is not None and interest_type.startswith('P') else ""
+            interest_amount = f"{interest_val}" if interest_val is not None and not interest_type.startswith('P') else ""
 
-                # Right column
-                if i < len(right_fields):
-                    label_r, val_r = right_fields[i]
-                    tk.Label(inner, text=f"{label_r}:", anchor="e", width=18, font=("Segoe UI", 10, "bold"), bg="#ffffff").grid(row=i*2, column=2, sticky="e", padx=12, pady=(8,2))
-                    val_lbl_r = tk.Label(inner, text=str(val_r) if val_r is not None else "", anchor="w", justify="left", wraplength=320, font=("Segoe UI", 10), bg="#ffffff", bd=1, relief="groove")
-                    val_lbl_r.grid(row=i*2, column=3, sticky="we", padx=6, pady=(8,2))
-                else:
-                    tk.Label(inner, text="", bg="#ffffff").grid(row=i*2, column=2)
-                    tk.Label(inner, text="", bg="#ffffff").grid(row=i*2, column=3)
+            # Sections: Customer, Item/Financial, Guarantor
+            sections = [
+                ("Customer Details", [
+                    ("Customer ID", data.get("customer_id")),
+                    ("Name", data.get("customer_name")),
+                    ("Phone", data.get("customer_phone")),
+                    ("Address", data.get("customer_address")),
+                    ("Village", data.get("village_name")),
+                    ("Remarks", data.get("customer_remarks")),
+                    ("Entry Date", data.get("entry_date")),
+                ]),
+                ("Item / Financial", [
+                    ("Brand", data.get("brand")),
+                    ("Model", data.get("model")),
+                    ("Item Amount", data.get("item_amount")),
+                    ("Advance", data.get("advance_amount")),
+                    ("Finance", data.get("finance_amount")),
+                    ("Interest (Percent)", interest_percent),
+                    ("Interest (Amount)", interest_amount),
+                    ("Interest Type", (data.get('interest_type') or '').upper()),
+                    ("Installment Amount", data.get("installment_amount")),
+                    ("Installment Mode", data.get("installment_mode")),
+                    ("Total Installments", data.get("total_installments")),
+                ]),
+                ("Guarantor", [
+                    ("Guarantor Name", data.get("guarantor_name")),
+                    ("Guarantor Phone", data.get("guarantor_phone")),
+                    ("Guarantor Address", data.get("guarantor_address")),
+                ])
+            ]
 
-                # single separator across both columns
-                sep = tk.Frame(inner, height=1, bg="#e5e7eb")
-                sep.grid(row=i*2+1, column=0, columnspan=4, sticky="we", padx=8, pady=(4,4))
+            labels_map = {}
+            current_row = 0
 
-            # Increase dialog width to accommodate two columns
-            try:
-                dlg.geometry("920x520")
-            except Exception:
-                pass
+            for sec_title, sec_fields in sections:
+                # Section header
+                tk.Label(inner, text=sec_title, font=("Segoe UI", 11, "bold"), bg="#ffffff").grid(row=current_row, column=0, columnspan=4, sticky="w", padx=12, pady=(12,6))
+                current_row += 1
+
+                # split fields for two-column layout inside this section
+                half = (len(sec_fields) + 1) // 2
+                left_fields = sec_fields[:half]
+                right_fields = sec_fields[half:]
+
+                rows_sec = max(len(left_fields), len(right_fields))
+                for i in range(rows_sec):
+                    # Left column
+                    if i < len(left_fields):
+                        label_l, val_l = left_fields[i]
+                        tk.Label(inner, text=f"{label_l}:", anchor="e", width=18, font=("Segoe UI", 10, "bold"), bg="#ffffff").grid(row=current_row, column=0, sticky="e", padx=12, pady=(8,2))
+                        val_lbl_l = tk.Label(inner, text=str(val_l) if val_l is not None else "", anchor="w", justify="left", wraplength=320, font=("Segoe UI", 10), bg="#ffffff", bd=1, relief="groove")
+                        val_lbl_l.grid(row=current_row, column=1, sticky="we", padx=6, pady=(8,2))
+                        labels_map[label_l] = val_lbl_l
+                    else:
+                        tk.Label(inner, text="", bg="#ffffff").grid(row=current_row, column=0)
+                        tk.Label(inner, text="", bg="#ffffff").grid(row=current_row, column=1)
+
+                    # Right column
+                    if i < len(right_fields):
+                        label_r, val_r = right_fields[i]
+                        tk.Label(inner, text=f"{label_r}:", anchor="e", width=18, font=("Segoe UI", 10, "bold"), bg="#ffffff").grid(row=current_row, column=2, sticky="e", padx=12, pady=(8,2))
+                        val_lbl_r = tk.Label(inner, text=str(val_r) if val_r is not None else "", anchor="w", justify="left", wraplength=320, font=("Segoe UI", 10), bg="#ffffff", bd=1, relief="groove")
+                        val_lbl_r.grid(row=current_row, column=3, sticky="we", padx=6, pady=(8,2))
+                        labels_map[label_r] = val_lbl_r
+                    else:
+                        tk.Label(inner, text="", bg="#ffffff").grid(row=current_row, column=2)
+                        tk.Label(inner, text="", bg="#ffffff").grid(row=current_row, column=3)
+
+                    current_row += 1
+
+                # solid separator line for the section
+                sep = tk.Frame(inner, height=2, bg="#2c3e50")
+                sep.grid(row=current_row, column=0, columnspan=4, sticky="we", padx=8, pady=(8,0))
+                current_row += 1
 
             # Payment history section
-            try:
-                item_id = data.get('item_id')
-                from models.payment_model import get_payments_by_item
+            tk.Label(inner, text="Payment History", font=("Segoe UI", 12, "bold"), bg="#ffffff").grid(row=current_row, column=0, columnspan=4, sticky="w", padx=12, pady=(12,4))
+            current_row += 1
 
-                tk.Label(inner, text="Payment History", font=("Segoe UI", 12, "bold"), bg="#ffffff").grid(row=rows*2+2, column=0, columnspan=4, sticky="w", padx=12, pady=(12,4))
-
-                payments = []
-                if item_id:
+            payments = []
+            item_id = data.get('item_id')
+            if item_id:
+                try:
+                    from models.payment_model import get_payments_by_item
                     payments = get_payments_by_item(item_id)
+                except Exception:
+                    payments = []
 
-                if payments:
-                    ph_cols = ["Date", "Amount Paid", "Remaining"]
-                    ph_tree = ttk.Treeview(inner, columns=ph_cols, show="headings", height=6)
-                    for pc in ph_cols:
-                        ph_tree.heading(pc, text=pc)
-                        ph_tree.column(pc, width=140, anchor="center")
-                    ph_tree.grid(row=rows*2+3, column=0, columnspan=4, sticky="we", padx=12, pady=(4,12))
-                    for p in payments:
-                        ph_tree.insert("", "end", values=[p.get('payment_date'), p.get('amount_paid'), p.get('remaining_amount')])
+            if payments:
+                ph_cols = ["Date", "Amount Paid", "Remaining"]
+                ph_tree = ttk.Treeview(inner, columns=ph_cols, show="headings", height=6)
+                for pc in ph_cols:
+                    ph_tree.heading(pc, text=pc)
+                    ph_tree.column(pc, width=140, anchor="center")
+                ph_tree.grid(row=current_row, column=0, columnspan=4, sticky="we", padx=12, pady=(4,12))
+                for p in payments:
+                    ph_tree.insert("", "end", values=[p.get('payment_date'), p.get('amount_paid'), p.get('remaining_amount')])
+                current_row += 1
+            else:
+                tk.Label(inner, text="No payment history.", fg="#666", bg="#ffffff").grid(row=current_row, column=0, columnspan=4, sticky="w", padx=12, pady=(4,12))
+                current_row += 1
+
+            # -- Edit flow: open modal to edit basic customer fields
+            def open_edit_dialog():
+                from models.customer_model import get_customer_by_id, update_customer
+                from models.address_model import get_all_addresses, add_address
+                from models.village_model import get_all_villages, add_village
+
+                customer_id = data.get('customer_id')
+                if not customer_id:
+                    messagebox.showerror("Error", "Cannot edit: missing customer id")
+                    return
+
+                edit = tk.Toplevel(dlg)
+                edit.title(f"Edit Customer {customer_id}")
+                edit.transient(dlg)
+                edit.grab_set()
+                edit.resizable(False, False)
+
+                # Form
+                tk.Label(edit, text="Name:").grid(row=0, column=0, padx=8, pady=6, sticky="e")
+                name_e = tk.Entry(edit, width=40)
+                name_e.grid(row=0, column=1, padx=8, pady=6)
+                name_e.insert(0, data.get('customer_name') or "")
+
+                tk.Label(edit, text="Phone:").grid(row=1, column=0, padx=8, pady=6, sticky="e")
+                phone_e = tk.Entry(edit, width=40)
+                phone_e.grid(row=1, column=1, padx=8, pady=6)
+                phone_e.insert(0, data.get('customer_phone') or "")
+
+                tk.Label(edit, text="Address:").grid(row=2, column=0, padx=8, pady=6, sticky="e")
+                addresses = get_all_addresses()
+                address_list = [f"{a['address_id']} - {a['address']}" for a in addresses]
+                address_cb = ttk.Combobox(edit, values=address_list, width=38, state="normal")
+                address_cb.grid(row=2, column=1, padx=8, pady=6)
+                # set current value (prefer address_id if available)
+                if data.get('address_id'):
+                    current_addr = next((f"{a['address_id']} - {a['address']}" for a in addresses if a['address_id'] == data.get('address_id')), None)
+                    if current_addr:
+                        address_cb.set(current_addr)
                 else:
-                    tk.Label(inner, text="No payment history.", fg="#666", bg="#ffffff").grid(row=rows*2+3, column=0, columnspan=4, sticky="w", padx=12, pady=(4,12))
-            except Exception:
-                # non-fatal: if payments fetch fails, quietly skip
-                pass
+                    address_cb.set(data.get('customer_address') or "")
+
+                tk.Label(edit, text="Village:").grid(row=3, column=0, padx=8, pady=6, sticky="e")
+                villages = get_all_villages()
+                village_list = [f"{v['village_id']} - {v['name']}" for v in villages]
+                village_cb = ttk.Combobox(edit, values=village_list, width=38, state="normal")
+                village_cb.grid(row=3, column=1, padx=8, pady=6)
+                if data.get('village_id'):
+                    current_vill = next((f"{v['village_id']} - {v['name']}" for v in villages if v['village_id'] == data.get('village_id')), None)
+                    if current_vill:
+                        village_cb.set(current_vill)
+                else:
+                    village_cb.set(data.get('village_name') or "")
+
+                tk.Label(edit, text="Remarks:").grid(row=4, column=0, padx=8, pady=6, sticky="e")
+                remarks_e = tk.Entry(edit, width=40)
+                remarks_e.grid(row=4, column=1, padx=8, pady=6)
+                remarks_e.insert(0, data.get('customer_remarks') or "")
+
+                tk.Label(edit, text="Entry Date (YYYY-MM-DD):").grid(row=5, column=0, padx=8, pady=6, sticky="e")
+                entry_date_e = tk.Entry(edit, width=40)
+                entry_date_e.grid(row=5, column=1, padx=8, pady=6)
+                entry_date_e.insert(0, data.get('entry_date') or "")
+
+                # Buttons
+                btn_frame = tk.Frame(edit)
+                btn_frame.grid(row=6, column=0, columnspan=2, pady=(6,8))
+
+                def on_save():
+                    name = name_e.get().strip()
+                    if not name:
+                        messagebox.showerror("Error", "Name is required")
+                        return
+                    phone = phone_e.get().strip()
+
+                    # Address handling: if the user selected or typed an id - text pair, parse id
+                    address_val = address_cb.get().strip()
+                    address_id = None
+                    address_text = None
+                    if address_val:
+                        if " - " in address_val:
+                            try:
+                                address_id = int(address_val.split(" - ", 1)[0])
+                                address_text = address_val.split(" - ", 1)[1]
+                            except Exception:
+                                address_id = None
+                                address_text = address_val
+                        else:
+                            # create new address
+                            try:
+                                address_id = add_address(address_val)
+                                address_text = address_val
+                            except Exception as e:
+                                messagebox.showerror("Error", f"Failed to add address: {e}")
+                                return
+
+                    # Village handling similarly
+                    village_val = village_cb.get().strip()
+                    village_id = None
+                    if village_val:
+                        if " - " in village_val:
+                            try:
+                                village_id = int(village_val.split(" - ", 1)[0])
+                            except Exception:
+                                village_id = None
+                        else:
+                            try:
+                                village_id = add_village(village_val)
+                            except Exception as e:
+                                messagebox.showerror("Error", f"Failed to add village: {e}")
+                                return
+
+                    remarks = remarks_e.get().strip() or None
+                    entry_date = entry_date_e.get().strip() or None
+
+                    try:
+                        update_customer(customer_id, name, phone, address_text, remarks, address_id, village_id, entry_date)
+                    except Exception as e:
+                        messagebox.showerror("Error", str(e))
+                        return
+
+                    # Refresh local data and UI
+                    new_data = get_customer_by_id(customer_id)
+                    if new_data:
+                        data.update(new_data)
+
+                    # Update displayed labels for changed fields
+                    labels_map.get('Name').config(text=str(data.get('customer_name') or ""))
+                    labels_map.get('Phone').config(text=str(data.get('customer_phone') or ""))
+                    labels_map.get('Address').config(text=str(data.get('customer_address') or ""))
+                    labels_map.get('Village').config(text=str(data.get('village_name') or ""))
+                    labels_map.get('Remarks').config(text=str(data.get('customer_remarks') or ""))
+                    labels_map.get('Entry Date').config(text=str(data.get('entry_date') or ""))
+
+                    # Refresh the main table
+                    rows = get_all_customer_items()
+                    populate(rows)
+
+                    edit.destroy()
+                    messagebox.showinfo("Success", "Customer updated successfully")
+
+                tk.Button(btn_frame, text="Save", command=on_save, bg="#27ae60", fg="white").pack(side=tk.LEFT, padx=6)
+                tk.Button(btn_frame, text="Cancel", command=edit.destroy).pack(side=tk.LEFT, padx=6)
 
             # Bottom action bar with Close
             action_bar = tk.Frame(dlg, bg="#ffffff")
             action_bar.pack(fill=tk.X)
             tk.Button(action_bar, text="Close", command=dlg.destroy, bg="#e74c3c", fg="white").pack(side=tk.RIGHT, padx=12, pady=8)
+            tk.Button(action_bar, text="Edit", command=open_edit_dialog, bg="#3498db", fg="white").pack(side=tk.RIGHT, padx=12, pady=8)
+            tk.Button(action_bar, text="Installment Details", command=lambda: self.show_installment_details(data.get('item_id'), dlg), bg="#8e44ad", fg="white").pack(side=tk.RIGHT, padx=12, pady=8)
+
+            # Permanent delete (superadmin only)
+            customer_id = data.get('customer_id')
+            def on_permanent_delete():
+                # Prompt for superadmin password (hidden)
+                pwd = simpledialog.askstring("Superadmin Password", "Enter superadmin password to permanently delete customer:", show="*")
+                if pwd is None:
+                    return
+                if pwd != SUPERADMIN_PASSWORD:
+                    messagebox.showerror("Error", "Incorrect superadmin password")
+                    return
+
+                if not messagebox.askyesno("Confirm Deletion", "Permanently delete this customer and all related records? This action cannot be undone."):
+                    return
+
+                try:
+                    from models.customer_model import delete_customer
+                    delete_customer(customer_id)
+                except Exception as e:
+                    messagebox.showerror("Error", f"Failed to delete customer: {e}")
+                    return
+
+                # Refresh main table and close dialog
+                rows = get_all_customer_items()
+                populate(rows)
+                dlg.destroy()
+                messagebox.showinfo("Success", "Customer permanently deleted")
+
+            if self.user and (self.user.get('role') or '').lower() == 'superadmin':
+                tk.Button(action_bar, text="Delete (Permanent)", command=on_permanent_delete, bg="#c0392b", fg="white").pack(side=tk.RIGHT, padx=12, pady=8)
 
             # Close on Escape
             dlg.bind('<Escape>', lambda e: dlg.destroy())
@@ -497,9 +924,538 @@ class MainWindow:
         rows = get_all_customer_items()
         populate(rows)
 
+        # Initial load
+        # Note: records intentionally show a simplified list; double-click a row to open full details
+        # Populate with all rows initially
+        rows = get_all_customer_items()
+        populate(rows)
 
 
 
+
+
+    def show_customer_details(self, data, parent=None):
+        """Show the customer/item detail dialog (used by Records and Payments)."""
+        dlg = tk.Toplevel(parent or self.root)
+        dlg.title(f"Customer {data.get('customer_id')} Details")
+        dlg.geometry("720x520")
+        dlg.transient(self.root)
+        dlg.grab_set()
+        dlg.resizable(True, True)
+
+        # Header
+        header = tk.Frame(dlg, bg="#f5f7fa")
+        header.pack(fill=tk.X)
+        tk.Label(header, text=str(data.get("customer_name") or ""), font=("Segoe UI", 14, "bold"), bg="#f5f7fa").pack(anchor="w", padx=12, pady=(8, 0))
+        tk.Label(header, text=f"ID: {data.get('customer_id') or ''}    •    Entry Date: {data.get('entry_date') or ''}", font=("Segoe UI", 9), bg="#f5f7fa").pack(anchor="w", padx=12, pady=(0, 8))
+
+        # Scrollable area
+        container = tk.Frame(dlg)
+        container.pack(fill=tk.BOTH, expand=True)
+
+        canvas = tk.Canvas(container, borderwidth=0, highlightthickness=0, bg="#ffffff")
+        vsb = ttk.Scrollbar(container, orient="vertical", command=canvas.yview)
+        vsb.pack(side=tk.RIGHT, fill=tk.Y)
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        canvas.configure(yscrollcommand=vsb.set)
+
+        inner = tk.Frame(canvas, bg="#ffffff")
+        canvas.create_window((0, 0), window=inner, anchor="nw")
+
+        def _on_frame_config(e):
+            canvas.configure(scrollregion=canvas.bbox("all"))
+        inner.bind('<Configure>', _on_frame_config)
+
+        # Mouse-wheel scrolling for the canvas
+        def _on_mousewheel(e):
+            if hasattr(e, 'delta') and e.delta:
+                canvas.yview_scroll(int(-1 * (e.delta / 120)), 'units')
+            else:
+                if getattr(e, 'num', None) == 4:
+                    canvas.yview_scroll(-1, 'units')
+                elif getattr(e, 'num', None) == 5:
+                    canvas.yview_scroll(1, 'units')
+
+        def _bind_canvas_scroll(ev):
+            canvas.bind_all('<MouseWheel>', _on_mousewheel)
+            canvas.bind_all('<Button-4>', _on_mousewheel)
+            canvas.bind_all('<Button-5>', _on_mousewheel)
+
+        def _unbind_canvas_scroll(ev):
+            canvas.unbind_all('<MouseWheel>')
+            canvas.unbind_all('<Button-4>')
+            canvas.unbind_all('<Button-5>')
+
+        inner.bind('<Enter>', _bind_canvas_scroll)
+        inner.bind('<Leave>', _unbind_canvas_scroll)
+
+        fields = [
+            ("Customer ID", data.get("customer_id")),
+            ("Name", data.get("customer_name")),
+            ("Phone", data.get("customer_phone")),
+            ("Address", data.get("customer_address")),
+            ("Village", data.get("village_name")),
+            ("Remarks", data.get("customer_remarks")),
+            ("Entry Date", data.get("entry_date")),
+            ("Brand", data.get("brand")),
+            ("Model", data.get("model")),
+            ("Item Amount", data.get("item_amount")),
+            ("Advance", data.get("advance_amount")),
+            ("Finance", data.get("finance_amount")),
+            ("Interest (%)", (f"{data.get('interest_rate')}%" if ((data.get('interest_type','PERCENT') or '').upper().startswith('P')) else f"{data.get('interest_rate')} (amt)")),
+            ("Interest Type", (data.get('interest_type') or '').upper()),
+
+            ("Installment Amount", data.get("installment_amount")),
+            ("Installment Mode", data.get("installment_mode")),
+            ("Total Installments", data.get("total_installments")),
+            ("Guarantor Name", data.get("guarantor_name")),
+            ("Guarantor Phone", data.get("guarantor_phone")),
+            ("Guarantor Address", data.get("guarantor_address"))
+        ]
+
+        # Render fields in a side-by-side two-column layout with separators to mimic cells
+        # Split fields roughly in half so they display left/right to reduce vertical scrolling
+        half = (len(fields) + 1) // 2
+        left_fields = fields[:half]
+        right_fields = fields[half:]
+
+        # Make columns 1 and 3 expandable
+        inner.grid_columnconfigure(1, weight=1)
+        inner.grid_columnconfigure(3, weight=1)
+
+        # Prepare interest values: show either percent or amount in separate fields
+        interest_val = data.get('interest_rate')
+        interest_type = (data.get('interest_type') or '').upper()
+        interest_percent = f"{interest_val}%" if interest_val is not None and interest_type.startswith('P') else ""
+        interest_amount = f"{interest_val}" if interest_val is not None and not interest_type.startswith('P') else ""
+
+        # Sections: Customer, Item/Financial, Guarantor
+        sections = [
+            ("Customer Details", [
+                ("Customer ID", data.get("customer_id")),
+                ("Name", data.get("customer_name")),
+                ("Phone", data.get("customer_phone")),
+                ("Address", data.get("customer_address")),
+                ("Village", data.get("village_name")),
+                ("Remarks", data.get("customer_remarks")),
+                ("Entry Date", data.get("entry_date")),
+            ]),
+            ("Item / Financial", [
+                ("Brand", data.get("brand")),
+                ("Model", data.get("model")),
+                ("Item Amount", data.get("item_amount")),
+                ("Advance", data.get("advance_amount")),
+                ("Finance", data.get("finance_amount")),
+                ("Interest (Percent)", interest_percent),
+                ("Interest (Amount)", interest_amount),
+                ("Interest Type", (data.get('interest_type') or '').upper()),
+                ("Installment Amount", data.get("installment_amount")),
+                ("Installment Mode", data.get("installment_mode")),
+                ("Total Installments", data.get("total_installments")),
+            ]),
+            ("Guarantor", [
+                ("Guarantor Name", data.get("guarantor_name")),
+                ("Guarantor Phone", data.get("guarantor_phone")),
+                ("Guarantor Address", data.get("guarantor_address")),
+            ]),
+        ]
+
+        labels_map = {}
+        current_row = 0
+
+        for sec_title, sec_fields in sections:
+            # Section header
+            tk.Label(inner, text=sec_title, font=("Segoe UI", 11, "bold"), bg="#ffffff").grid(row=current_row, column=0, columnspan=4, sticky="w", padx=12, pady=(12,6))
+            current_row += 1
+
+            # split fields for two-column layout inside this section
+            half = (len(sec_fields) + 1) // 2
+            left_fields = sec_fields[:half]
+            right_fields = sec_fields[half:]
+
+            rows_sec = max(len(left_fields), len(right_fields))
+            for i in range(rows_sec):
+                # Left column
+                if i < len(left_fields):
+                    label_l, val_l = left_fields[i]
+                    tk.Label(inner, text=f"{label_l}:", anchor="e", width=18, font=("Segoe UI", 10, "bold"), bg="#ffffff").grid(row=current_row, column=0, sticky="e", padx=12, pady=(8,2))
+                    val_lbl_l = tk.Label(inner, text=str(val_l) if val_l is not None else "", anchor="w", justify="left", wraplength=320, font=("Segoe UI", 10), bg="#ffffff", bd=1, relief="groove")
+                    val_lbl_l.grid(row=current_row, column=1, sticky="we", padx=6, pady=(8,2))
+                    labels_map[label_l] = val_lbl_l
+                else:
+                    tk.Label(inner, text="", bg="#ffffff").grid(row=current_row, column=0)
+                    tk.Label(inner, text="", bg="#ffffff").grid(row=current_row, column=1)
+
+                # Right column
+                if i < len(right_fields):
+                    label_r, val_r = right_fields[i]
+                    tk.Label(inner, text=f"{label_r}:", anchor="e", width=18, font=("Segoe UI", 10, "bold"), bg="#ffffff").grid(row=current_row, column=2, sticky="e", padx=12, pady=(8,2))
+                    val_lbl_r = tk.Label(inner, text=str(val_r) if val_r is not None else "", anchor="w", justify="left", wraplength=320, font=("Segoe UI", 10), bg="#ffffff", bd=1, relief="groove")
+                    val_lbl_r.grid(row=current_row, column=3, sticky="we", padx=6, pady=(8,2))
+                    labels_map[label_r] = val_lbl_r
+                else:
+                    tk.Label(inner, text="", bg="#ffffff").grid(row=current_row, column=2)
+                    tk.Label(inner, text="", bg="#ffffff").grid(row=current_row, column=3)
+
+                current_row += 1
+
+            # solid separator line for the section
+            sep = tk.Frame(inner, height=2, bg="#2c3e50")
+            sep.grid(row=current_row, column=0, columnspan=4, sticky="we", padx=8, pady=(8,0))
+            current_row += 1
+
+        # Payment history section
+        tk.Label(inner, text="Payment History", font=("Segoe UI", 12, "bold"), bg="#ffffff").grid(row=current_row, column=0, columnspan=4, sticky="w", padx=12, pady=(12,4))
+        current_row += 1
+
+        payments = []
+        item_id = data.get('item_id')
+        if item_id:
+            try:
+                from models.payment_model import get_payments_by_item
+                payments = get_payments_by_item(item_id)
+            except Exception:
+                payments = []
+
+        if payments:
+            ph_cols = ["Date", "Amount Paid", "Remaining"]
+            ph_tree = ttk.Treeview(inner, columns=ph_cols, show="headings", height=6)
+            for pc in ph_cols:
+                ph_tree.heading(pc, text=pc)
+                ph_tree.column(pc, width=140, anchor="center")
+            ph_tree.grid(row=current_row, column=0, columnspan=4, sticky="we", padx=12, pady=(4,12))
+            for p in payments:
+                ph_tree.insert("", "end", values=[p.get('payment_date'), p.get('amount_paid'), p.get('remaining_amount')])
+            current_row += 1
+        else:
+            tk.Label(inner, text="No payment history.", fg="#666", bg="#ffffff").grid(row=current_row, column=0, columnspan=4, sticky="w", padx=12, pady=(4,12))
+            current_row += 1
+
+        # -- Edit flow: open modal to edit basic customer fields
+        def open_edit_dialog():
+            from models.customer_model import get_customer_by_id, update_customer
+            from models.address_model import get_all_addresses, add_address
+            from models.village_model import get_all_villages, add_village
+
+            customer_id = data.get('customer_id')
+            if not customer_id:
+                messagebox.showerror("Error", "Cannot edit: missing customer id")
+                return
+
+            edit = tk.Toplevel(dlg)
+            edit.title(f"Edit Customer {customer_id}")
+            edit.transient(dlg)
+            edit.grab_set()
+            edit.resizable(False, False)
+
+            # Form
+            tk.Label(edit, text="Name:").grid(row=0, column=0, padx=8, pady=6, sticky="e")
+            name_e = tk.Entry(edit, width=40)
+            name_e.grid(row=0, column=1, padx=8, pady=6)
+            name_e.insert(0, data.get('customer_name') or "")
+
+            tk.Label(edit, text="Phone:").grid(row=1, column=0, padx=8, pady=6, sticky="e")
+            phone_e = tk.Entry(edit, width=40)
+            phone_e.grid(row=1, column=1, padx=8, pady=6)
+            phone_e.insert(0, data.get('customer_phone') or "")
+
+            tk.Label(edit, text="Address:").grid(row=2, column=0, padx=8, pady=6, sticky="e")
+            addresses = get_all_addresses()
+            address_list = [f"{a['address_id']} - {a['address']}" for a in addresses]
+            address_cb = ttk.Combobox(edit, values=address_list, width=38, state="normal")
+            address_cb.grid(row=2, column=1, padx=8, pady=6)
+            # set current value (prefer address_id if available)
+            if data.get('address_id'):
+                current_addr = next((f"{a['address_id']} - {a['address']}" for a in addresses if a['address_id'] == data.get('address_id')), None)
+                if current_addr:
+                    address_cb.set(current_addr)
+            else:
+                address_cb.set(data.get('customer_address') or "")
+
+            tk.Label(edit, text="Village:").grid(row=3, column=0, padx=8, pady=6, sticky="e")
+            villages = get_all_villages()
+            village_list = [f"{v['village_id']} - {v['name']}" for v in villages]
+            village_cb = ttk.Combobox(edit, values=village_list, width=38, state="normal")
+            village_cb.grid(row=3, column=1, padx=8, pady=6)
+            if data.get('village_id'):
+                current_vill = next((f"{v['village_id']} - {v['name']}" for v in villages if v['village_id'] == data.get('village_id')), None)
+                if current_vill:
+                    village_cb.set(current_vill)
+            else:
+                village_cb.set(data.get('village_name') or "")
+
+            tk.Label(edit, text="Remarks:").grid(row=4, column=0, padx=8, pady=6, sticky="e")
+            remarks_e = tk.Entry(edit, width=40)
+            remarks_e.grid(row=4, column=1, padx=8, pady=6)
+            remarks_e.insert(0, data.get('customer_remarks') or "")
+
+            tk.Label(edit, text="Entry Date (YYYY-MM-DD):").grid(row=5, column=0, padx=8, pady=6, sticky="e")
+            entry_date_e = tk.Entry(edit, width=40)
+            entry_date_e.grid(row=5, column=1, padx=8, pady=6)
+            entry_date_e.insert(0, data.get('entry_date') or "")
+
+            # Buttons
+            btn_frame = tk.Frame(edit)
+            btn_frame.grid(row=6, column=0, columnspan=2, pady=(6,8))
+
+            def on_save():
+                name = name_e.get().strip()
+                if not name:
+                    messagebox.showerror("Error", "Name is required")
+                    return
+                phone = phone_e.get().strip()
+
+                # Address handling: if the user selected or typed an id - text pair, parse id
+                address_val = address_cb.get().strip()
+                address_id = None
+                address_text = None
+                if address_val:
+                    if " - " in address_val:
+                        try:
+                            address_id = int(address_val.split(" - ", 1)[0])
+                            address_text = address_val.split(" - ", 1)[1]
+                        except Exception:
+                            address_id = None
+                            address_text = address_val
+                    else:
+                        # create new address
+                        try:
+                            address_id = add_address(address_val)
+                            address_text = address_val
+                        except Exception as e:
+                            messagebox.showerror("Error", f"Failed to add address: {e}")
+                            return
+
+                # Village handling similarly
+                village_val = village_cb.get().strip()
+                village_id = None
+                if village_val:
+                    if " - " in village_val:
+                        try:
+                            village_id = int(village_val.split(" - ", 1)[0])
+                        except Exception:
+                            village_id = None
+                    else:
+                        try:
+                            village_id = add_village(village_val)
+                        except Exception as e:
+                            messagebox.showerror("Error", f"Failed to add village: {e}")
+                            return
+
+                remarks = remarks_e.get().strip() or None
+                entry_date = entry_date_e.get().strip() or None
+
+                try:
+                    update_customer(customer_id, name, phone, address_text, remarks, address_id, village_id, entry_date)
+                except Exception as e:
+                    messagebox.showerror("Error", str(e))
+                    return
+
+                # Refresh local data and UI
+                new_data = get_customer_by_id(customer_id)
+                if new_data:
+                    data.update(new_data)
+
+                # Update displayed labels for changed fields
+                labels_map.get('Name').config(text=str(data.get('customer_name') or ""))
+                labels_map.get('Phone').config(text=str(data.get('customer_phone') or ""))
+                labels_map.get('Address').config(text=str(data.get('customer_address') or ""))
+                labels_map.get('Village').config(text=str(data.get('village_name') or ""))
+                labels_map.get('Remarks').config(text=str(data.get('customer_remarks') or ""))
+                labels_map.get('Entry Date').config(text=str(data.get('entry_date') or ""))
+
+                # Refresh the main table
+                rows = get_all_customer_items()
+                populate(rows)
+
+                edit.destroy()
+                messagebox.showinfo("Success", "Customer updated successfully")
+
+            tk.Button(btn_frame, text="Save", command=on_save, bg="#27ae60", fg="white").pack(side=tk.LEFT, padx=6)
+            tk.Button(btn_frame, text="Cancel", command=edit.destroy).pack(side=tk.LEFT, padx=6)
+
+        # Bottom action bar with Close
+        action_bar = tk.Frame(dlg, bg="#ffffff")
+        action_bar.pack(fill=tk.X)
+        tk.Button(action_bar, text="Close", command=dlg.destroy, bg="#e74c3c", fg="white").pack(side=tk.RIGHT, padx=12, pady=8)
+        tk.Button(action_bar, text="Edit", command=open_edit_dialog, bg="#3498db", fg="white").pack(side=tk.RIGHT, padx=12, pady=8)
+        tk.Button(action_bar, text="Installment Details", command=lambda: self.show_installment_details(data.get('item_id'), dlg), bg="#8e44ad", fg="white").pack(side=tk.RIGHT, padx=12, pady=8)
+
+        # Permanent delete (superadmin only)
+        customer_id = data.get('customer_id')
+        def on_permanent_delete():
+            # Prompt for superadmin password (hidden)
+            pwd = simpledialog.askstring("Superadmin Password", "Enter superadmin password to permanently delete customer:", show="*")
+            if pwd is None:
+                return
+            if pwd != SUPERADMIN_PASSWORD:
+                messagebox.showerror("Error", "Incorrect superadmin password")
+                return
+
+            if not messagebox.askyesno("Confirm Deletion", "Permanently delete this customer and all related records? This action cannot be undone."):
+                return
+
+            try:
+                from models.customer_model import delete_customer
+                delete_customer(customer_id)
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to delete customer: {e}")
+                return
+
+            # Refresh main table and close dialog
+            rows = get_all_customer_items()
+            populate(rows)
+            dlg.destroy()
+            messagebox.showinfo("Success", "Customer permanently deleted")
+
+        if self.user and (self.user.get('role') or '').lower() == 'superadmin':
+            tk.Button(action_bar, text="Delete (Permanent)", command=on_permanent_delete, bg="#c0392b", fg="white").pack(side=tk.RIGHT, padx=12, pady=8)
+
+        # Close on Escape
+        dlg.bind('<Escape>', lambda e: dlg.destroy())
+
+    def show_installment_details(self, item_id, parent=None):
+        """Show installment schedule and allocation dialog for an item_id."""
+        from models.item_model import get_item_by_id
+        from models.payment_model import get_payments_by_item
+        from services.emi_calculate import generate_due_dates
+        from datetime import datetime, date as _date
+        from tkinter import messagebox
+
+        if not item_id:
+            messagebox.showinfo("Info", "No item associated with this selection")
+            return
+
+        item = get_item_by_id(item_id)
+        if not item:
+            messagebox.showerror("Error", "Item not found")
+            return
+
+        # Parse start_date (DB may return date or string)
+        start = item.get('start_date')
+        if isinstance(start, str):
+            try:
+                start = datetime.strptime(start, '%Y-%m-%d').date()
+            except Exception:
+                start = _date.today()
+        if not start:
+            start = _date.today()
+
+        total = int(item.get('total_installments') or 0)
+        inst_amt = float(item.get('installment_amount') or 0)
+        mode = item.get('installment_mode') or 'MONTHLY'
+
+        due_dates = generate_due_dates(start, total, mode)
+
+        payments = get_payments_by_item(item_id) or []
+
+        # Prepare installments data
+        installments = []
+        for idx, dd in enumerate(due_dates, start=1):
+            installments.append({
+                'no': idx,
+                'due_date': dd,
+                'expected': inst_amt,
+                'received': 0.0,
+                'balance': inst_amt,
+                'receipts': [],
+                'remarks': ''
+            })
+
+        # Allocate payments to installments in chronological order
+        for p in payments:
+            amt = float(p.get('amount_paid') or 0)
+            p_date = p.get('payment_date')
+            p_id = p.get('payment_id') or p.get('id') or None
+
+            # normalize payment date
+            if isinstance(p_date, str):
+                try:
+                    p_date = datetime.strptime(p_date, '%Y-%m-%d').date()
+                except Exception:
+                    p_date = _date.today()
+
+            i = 0
+            while amt > 0 and i < len(installments):
+                inst = installments[i]
+                if inst['balance'] > 0:
+                    apply_amt = min(amt, inst['balance'])
+                    inst['received'] += apply_amt
+                    inst['balance'] -= apply_amt
+                    inst['receipts'].append({'payment_id': p_id, 'amount': apply_amt, 'payment_date': p_date})
+                    amt = round(amt - apply_amt, 2)
+                else:
+                    i += 1
+
+        # Compute derived fields for display
+        today = _date.today()
+        for inst in installments:
+            # receipt ids
+            r_ids = [str(r['payment_id']) for r in inst['receipts'] if r['payment_id']]
+            inst['receipt_no'] = ','.join(r_ids)
+
+            # overdues received (payments that occurred after due date)
+            overdue_received = sum(r['amount'] for r in inst['receipts'] if r['payment_date'] and r['payment_date'] > inst['due_date'])
+            inst['overdue_received'] = round(overdue_received, 2)
+
+            # determine overdays
+            if inst['received'] >= inst['expected'] and inst['receipts']:
+                # find date when installment was fully paid
+                cum = 0
+                full_date = None
+                for r in inst['receipts']:
+                    cum += r['amount']
+                    if cum >= inst['expected']:
+                        full_date = r['payment_date']
+                        break
+                if full_date:
+                    inst['overdays'] = max(0, (full_date - inst['due_date']).days)
+                else:
+                    inst['overdays'] = 0
+            else:
+                # not fully paid
+                inst['overdays'] = max(0, (today - inst['due_date']).days) if today > inst['due_date'] else 0
+
+            # remarks
+            if inst['received'] >= inst['expected']:
+                inst['remarks'] = 'Paid'
+                if inst['overdays'] > 0:
+                    inst['remarks'] += f" (Late by {inst['overdays']}d)"
+            elif inst['received'] > 0:
+                inst['remarks'] = f"Partial ({inst['received']}/{inst['expected']})"
+                if inst['overdays'] > 0:
+                    inst['remarks'] += f" - Overdue {inst['overdays']}d"
+            else:
+                inst['remarks'] = 'Unpaid' + (f" - Overdue {inst['overdays']}d" if inst['overdays'] > 0 else '')
+
+        # Build dialog
+        dlg2 = tk.Toplevel(parent or self.root)
+        dlg2.title(f"Installment Details for Item {item_id}")
+        dlg2.geometry('900x520')
+
+        cols = ["#","Due Date","Expected","Received","Receipt No","Overdays","Rcd Overdues","Balance","Remarks"]
+        tree2 = ttk.Treeview(dlg2, columns=cols, show='headings')
+        for c in cols:
+            tree2.heading(c, text=c)
+            tree2.column(c, width=100, anchor='center')
+        tree2.pack(fill=tk.BOTH, expand=True)
+
+        # Insert rows
+        for inst in installments:
+            tree2.insert('', 'end', values=[
+                inst['no'],
+                inst['due_date'].isoformat() if hasattr(inst['due_date'], 'isoformat') else str(inst['due_date']),
+                f"{inst['expected']:.2f}",
+                f"{inst['received']:.2f}",
+                inst.get('receipt_no', ''),
+                inst.get('overdays', 0),
+                f"{inst.get('overdue_received', 0):.2f}",
+                f"{inst.get('balance', 0):.2f}",
+                inst.get('remarks', '')
+            ])
+
+        # Close on escape
+        dlg2.bind('<Escape>', lambda e: dlg2.destroy())
 
     # ================= PAYMENTS =================
     def open_payments(self):
@@ -594,12 +1550,28 @@ class MainWindow:
         table_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
         columns = [
-            "Customer ID", "Name", "Phone", "Village", "Item",
+            "Customer ID", "Name", "Phone", "Village", "Address", "Item",
             "Total Amount", "Paid Amount", "Due Amount", "Installment Mode", "Total Installments", "Paid Status"
         ]
 
         tree = ttk.Treeview(table_frame, columns=columns, show="headings")
         tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        # mapping of tree iid -> underlying row data for detail lookups
+        detail_map = {}
+
+        # Double-click handler for Payments table to show installment details
+        def on_pay_double_click(event):
+            itm = tree.focus()
+            if not itm:
+                return
+            r = detail_map.get(itm)
+            if not r:
+                return
+            # Open the full customer/item detail dialog (includes payment history and Installment Details)
+            self.show_customer_details(r, parent=self.content_frame)
+
+        tree.bind("<Double-1>", on_pay_double_click)
 
         # Scrollbars
         vsb = ttk.Scrollbar(table_frame, orient="vertical", command=tree.yview)
@@ -613,7 +1585,11 @@ class MainWindow:
         # Headings
         for col in columns:
             tree.heading(col, text=col)
-            tree.column(col, width=120, anchor="center")
+            # make Address column wider for readability
+            if col == "Address":
+                tree.column(col, width=240, anchor="center")
+            else:
+                tree.column(col, width=120, anchor="center")
 
         # ========== Search Logic ==========
         from models.report_model import get_all_customer_items  # You can modify this to include payment info
@@ -674,14 +1650,15 @@ class MainWindow:
 
             for row in rows:
                 paid_status = row.get("paid_status", "Unpaid")
-                tree.insert(
+                iid = tree.insert(
                     "",
                     "end",
                     values=[
                         row.get("customer_id") or "",
                         row.get("customer_name") or "",
                         row.get("customer_phone") or "",
-                        row.get("village_name") or row.get("customer_address") or "",
+                        row.get("village_name") or "",
+                        row.get("customer_address") or "",
                         f"{row.get('brand') or ''} {row.get('model') or ''}".strip(),
                         row.get("item_amount") or "",
                         row.get("total_paid") or 0,
@@ -691,6 +1668,7 @@ class MainWindow:
                         paid_status
                     ]
                 )
+                detail_map[iid] = row
                         
 
         # Search button
@@ -705,13 +1683,81 @@ class MainWindow:
 
         tk.Button(
             filter_frame,
+            text="� Payment Records",
+            bg="#f39c12",
+            fg="white",
+            font=("Arial", 10, "bold"),
+            command=lambda: self.open_payment_records()
+        ).grid(row=0, column=9, padx=10)
+
+        tk.Button(
+            filter_frame,
             text="💸 Record Payment",
             bg="#27ae60",
             fg="white",
             font=("Arial", 10, "bold"),
             command=lambda: self.open_record_payment()
-        ).grid(row=0, column=9, padx=10)
+        ).grid(row=0, column=10, padx=10)
 
         # Initial load
         search_records()
 
+    def open_payment_records(self):
+        """Open a dialog listing all individual payment records with customer details."""
+        dlg = tk.Toplevel(self.root)
+        dlg.title("Payment Records")
+        dlg.geometry("900x520")
+
+        top = tk.Frame(dlg)
+        top.pack(fill=tk.X, padx=8, pady=6)
+        tk.Label(top, text="From (YYYY-MM-DD):").pack(side=tk.LEFT)
+        from_e = tk.Entry(top, width=12)
+        from_e.pack(side=tk.LEFT, padx=6)
+        tk.Label(top, text="To (YYYY-MM-DD):").pack(side=tk.LEFT, padx=(10,0))
+        to_e = tk.Entry(top, width=12)
+        to_e.pack(side=tk.LEFT, padx=6)
+        tk.Label(top, text="Name:").pack(side=tk.LEFT, padx=(10,0))
+        name_e = tk.Entry(top, width=20)
+        name_e.pack(side=tk.LEFT, padx=6)
+
+        # Treeview
+        cols = ["Payment ID","Date","Customer ID","Name","Phone","Item ID","Brand","Amount Paid","Remaining"]
+        tree = ttk.Treeview(dlg, columns=cols, show="headings")
+        for c in cols:
+            tree.heading(c, text=c)
+            tree.column(c, width=100, anchor='center')
+        tree.pack(fill=tk.BOTH, expand=True, padx=8, pady=6)
+
+        vsb = ttk.Scrollbar(dlg, orient="vertical", command=tree.yview)
+        vsb.pack(side=tk.RIGHT, fill=tk.Y)
+        tree.configure(yscrollcommand=vsb.set)
+
+        def load_records():
+            from models.payment_model import get_all_payments
+            filters = {}
+            if from_e.get().strip():
+                filters["payment_from"] = from_e.get().strip()
+            if to_e.get().strip():
+                filters["payment_to"] = to_e.get().strip()
+            if name_e.get().strip():
+                filters["customer_name"] = name_e.get().strip()
+            rows = get_all_payments(filters)
+            for i in tree.get_children():
+                tree.delete(i)
+            for r in rows:
+                tree.insert("", "end", values=[
+                    r.get('payment_id') or r.get('id') or '',
+                    r.get('payment_date'),
+                    r.get('customer_id') or '',
+                    r.get('customer_name') or '',
+                    r.get('customer_phone') or '',
+                    r.get('item_id') or '',
+                    f"{r.get('brand') or ''} {r.get('model') or ''}".strip(),
+                    r.get('amount_paid') or '',
+                    r.get('remaining_amount') or ''
+                ])
+
+        tk.Button(top, text="🔄 Reload", command=load_records, bg="#2ecc71", fg="white").pack(side=tk.LEFT, padx=8)
+        tk.Button(top, text="Close", command=dlg.destroy, bg="#e74c3c", fg="white").pack(side=tk.RIGHT, padx=8)
+
+        load_records()
