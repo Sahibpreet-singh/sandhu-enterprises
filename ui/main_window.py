@@ -14,7 +14,7 @@ class MainWindow:
         self.user = user  # admin or superadmin
 
         # Zoom functionality
-        self.zoom_level = 1.0  # 1.0 = 100%, 0.8 = 80%, 1.2 = 120%, etc.
+        self.zoom_level = 1.2  # Default at 120% zoom
         self.base_font_size = 9
         self.base_header_font_size = 10
         self.base_row_height = 25
@@ -77,7 +77,7 @@ class MainWindow:
         
         self.zoom_label = tk.Label(
             zoom_frame,
-            text="100%",
+            text="120%",
             font=("Segoe UI", 10, "bold"),
             bg="#34495e",
             fg="#ecf0f1",
@@ -1310,23 +1310,14 @@ class MainWindow:
         village_cb = ttk.Combobox(filter_frame, width=30, state="normal")
         village_cb.grid(row=0, column=5, padx=5, pady=5)
 
-        tk.Label(filter_frame, text="Address:", bg="white").grid(row=0, column=6, padx=5, pady=5, sticky="e")
-        address_cb = ttk.Combobox(filter_frame, width=40, state="normal")
-        address_cb.grid(row=0, column=7, padx=5, pady=5)
-
         # store full lists so we can filter locally
         village_full = []
-        address_full = []
 
         def load_address_village():
             from models.village_model import get_all_villages
-            from models.address_model import get_all_addresses
             villages = get_all_villages()
             village_full[:] = [f"{v['village_id']} - {v['name']}" for v in villages]
             village_cb["values"] = village_full
-            addresses = get_all_addresses()
-            address_full[:] = [f"{a['address_id']} - {a['address']}" for a in addresses]
-            address_cb["values"] = address_full
 
         def _filter_combobox(cb, full_list, event=None):
             val = cb.get()
@@ -1345,7 +1336,6 @@ class MainWindow:
 
         # bind typing events to filter suggestions
         village_cb.bind('<KeyRelease>', lambda e: _filter_combobox(village_cb, village_full, e))
-        address_cb.bind('<KeyRelease>', lambda e: _filter_combobox(address_cb, address_full, e))
 
         load_address_village()
 
@@ -1399,11 +1389,11 @@ class MainWindow:
 
         # Column headers
         columns = [
-            "Customer ID", "Name", "Phone", "Village", "Address", "Item",
+            "Customer ID", "Name", "Phone", "Village", "Item",
             "Total Amount", "Paid Amount", "Due Amount", "Installment Mode", "Total Installments", "Paid Status"
         ]
         
-        column_widths = [80, 120, 100, 100, 200, 150, 100, 100, 100, 120, 120, 80]
+        column_widths = [80, 120, 100, 100, 150, 100, 100, 100, 120, 120, 80]
         
         # Create header row
         self.header_cells = []
@@ -1479,7 +1469,6 @@ class MainWindow:
                     row.get("customer_name") or "",
                     row.get("customer_phone") or "",
                     row.get("village_name") or "",
-                    row.get("customer_address") or "",
                     f"{row.get('brand') or ''} {row.get('model') or ''}".strip(),
                     f"₹{row.get('item_amount') or 0:,.0f}",
                     f"₹{row.get('total_paid') or 0:,.0f}",
@@ -1517,18 +1506,10 @@ class MainWindow:
             else:
                 village_filter = None
 
-            address_val = address_cb.get().strip()
-            if address_val:
-                parts = address_val.split(" - ", 1)
-                address_filter = parts[1] if len(parts) > 1 else parts[0]
-            else:
-                address_filter = None
-
             filters = {
                 "name": name_entry.get().strip() or None,
                 "phone": phone_entry.get().strip() or None,
                 "village": village_filter,
-                "address": address_filter,
                 "item": item_entry.get().strip() or None,
                 "status": status_cb.get() if status_cb.get() != "All" else None,
             }
