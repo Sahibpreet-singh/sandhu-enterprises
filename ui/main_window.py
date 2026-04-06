@@ -13,6 +13,12 @@ class MainWindow:
         self.root = root
         self.user = user  # admin or superadmin
 
+        # Zoom functionality
+        self.zoom_level = 1.0  # 1.0 = 100%, 0.8 = 80%, 1.2 = 120%, etc.
+        self.base_font_size = 9
+        self.base_header_font_size = 10
+        self.base_row_height = 25
+
         self.root.title("Sandhu Enterprises – EMI Management System")
         
         # Maximize window
@@ -47,7 +53,48 @@ class MainWindow:
             pady=15
         ).pack(side=tk.LEFT, padx=15)
 
-        # User info
+        # User info and zoom controls
+        zoom_frame = tk.Frame(header_frame, bg="#34495e")
+        zoom_frame.pack(side=tk.RIGHT, padx=25)
+        
+        tk.Label(
+            zoom_frame,
+            text="🔍 Zoom:",
+            font=("Segoe UI", 10),
+            bg="#34495e",
+            fg="#ecf0f1"
+        ).pack(side=tk.LEFT, padx=(0,5))
+        
+        tk.Button(
+            zoom_frame,
+            text="➖",
+            font=("Segoe UI", 10, "bold"),
+            bg="#e74c3c",
+            fg="white",
+            width=3,
+            command=self.zoom_out
+        ).pack(side=tk.LEFT, padx=2)
+        
+        self.zoom_label = tk.Label(
+            zoom_frame,
+            text="100%",
+            font=("Segoe UI", 10, "bold"),
+            bg="#34495e",
+            fg="#ecf0f1",
+            width=5
+        )
+        self.zoom_label.pack(side=tk.LEFT, padx=2)
+        
+        tk.Button(
+            zoom_frame,
+            text="➕",
+            font=("Segoe UI", 10, "bold"),
+            bg="#27ae60",
+            fg="white",
+            width=3,
+            command=self.zoom_in
+        ).pack(side=tk.LEFT, padx=2)
+
         user_text = f"👤 {self.user.get('username', 'User')}" if self.user else "👤 Guest"
         tk.Label(
             header_frame,
@@ -56,7 +103,7 @@ class MainWindow:
             bg="#34495e",
             fg="#ecf0f1",
             pady=15
-        ).pack(side=tk.RIGHT, padx=25)
+        ).pack(side=tk.RIGHT, padx=(25,0))
 
     # ================= LEFT MENU =================
     def create_menu(self):
@@ -272,6 +319,73 @@ class MainWindow:
             if i < len(self.stat_labels):
                 self.stat_labels[i].config(text=str(value))
 
+    def zoom_in(self):
+        """Increase zoom level and refresh all grids."""
+        if self.zoom_level < 2.0:
+            self.zoom_level += 0.1
+            self.update_zoom_display()
+            self.refresh_all_grids()
+
+    def zoom_out(self):
+        """Decrease zoom level and refresh all grids."""
+        if self.zoom_level > 0.5:
+            self.zoom_level -= 0.1
+            self.update_zoom_display()
+            self.refresh_all_grids()
+
+    def update_zoom_display(self):
+        """Update the zoom percentage display in the header."""
+        if hasattr(self, 'zoom_label'):
+            percentage = int(self.zoom_level * 100)
+            self.zoom_label.config(text=f"{percentage}%")
+
+    def refresh_all_grids(self):
+        """Refresh all currently visible grid layouts with new zoom level."""
+        # Get current font sizes based on zoom
+        current_font_size = int(self.base_font_size * self.zoom_level)
+        current_header_font_size = int(self.base_header_font_size * self.zoom_level)
+        current_row_height = int(self.base_row_height * self.zoom_level)
+
+        # Update payment search grid cells if they exist
+        if hasattr(self, 'grid_cells') and self.grid_cells:
+            for cell in self.grid_cells:
+                if cell.winfo_exists():
+                    cell.config(font=("Segoe UI", current_font_size))
+
+        # Update payment search header cells if they exist
+        if hasattr(self, 'header_cells') and self.header_cells:
+            for cell in self.header_cells:
+                if cell.winfo_exists():
+                    cell.config(font=("Segoe UI", current_header_font_size, "bold"))
+
+        # Update installment grid cells if they exist
+        if hasattr(self, 'installment_grid_cells') and self.installment_grid_cells:
+            for cell in self.installment_grid_cells:
+                if cell.winfo_exists():
+                    cell.config(font=("Segoe UI", current_font_size))
+
+        # Update installment header cells if they exist
+        if hasattr(self, 'installment_header_cells') and self.installment_header_cells:
+            for cell in self.installment_header_cells:
+                if cell.winfo_exists():
+                    cell.config(font=("Segoe UI", current_header_font_size, "bold"))
+
+        # Update payment records grid cells if they exist
+        if hasattr(self, 'records_grid_cells') and self.records_grid_cells:
+            for cell in self.records_grid_cells:
+                if cell.winfo_exists():
+                    cell.config(font=("Segoe UI", current_font_size))
+
+        # Update payment records header cells if they exist
+        if hasattr(self, 'records_header_cells') and self.records_header_cells:
+            for cell in self.records_header_cells:
+                if cell.winfo_exists():
+                    cell.config(font=("Segoe UI", current_header_font_size, "bold"))
+
+        # Update canvas scroll region if needed
+        if hasattr(self, 'canvas') and self.canvas.winfo_exists():
+            self.canvas.config(height=current_row_height * 20)  # Adjust based on visible rows
+
     def clear_content(self):
         for widget in self.content_frame.winfo_children():
             widget.destroy()
@@ -405,12 +519,11 @@ class MainWindow:
     def export_records(self, detail_map):
         # Simple export of currently loaded records to CSV
         import csv
-        rows = [detail_map[iid] for iid in detail_map]
+        rows = list(detail_map.values())  # Get all row data from the detail map
         if not rows:
             messagebox.showinfo('Export', 'No records to export')
             return
         path = 'records_export.csv'
-        keys = ['customer_id','customer_name','customer_address','village_name','brand']
         with open(path, 'w', newline='', encoding='utf-8') as f:
             w = csv.writer(f)
             w.writerow(['customer_id','name','address','village','brand'])
@@ -444,107 +557,110 @@ class MainWindow:
         toolbar = tk.Frame(self.content_frame, bg="#ffffff")
         toolbar.pack(fill=tk.X, padx=10, pady=(5, 0))
         tk.Button(toolbar, text="🔄 Refresh", command=lambda: populate(get_all_customer_items()), bg="#2ecc71", fg="white").pack(side=tk.LEFT, padx=6)
-        tk.Button(toolbar, text="📤 Export CSV", command=lambda: self.export_records(detail_map), bg="#3498db", fg="white").pack(side=tk.LEFT)
+        tk.Button(toolbar, text="📤 Export CSV", command=lambda: self.export_records(self.items_detail_map), bg="#3498db", fg="white").pack(side=tk.LEFT)
 
-        # Frame for table and scrollbars
-        table_frame = tk.Frame(self.content_frame, bd=1, relief="solid")
+        # ========== Table Frame ==========
+        table_frame = tk.Frame(self.content_frame)
         table_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        # Simplified columns for Records view (Excel-like appearance)
+        # Create scrollable canvas for the grid
+        canvas = tk.Canvas(table_frame, bg="#ffffff")
+        scrollbar_y = ttk.Scrollbar(table_frame, orient="vertical", command=canvas.yview)
+        scrollbar_x = ttk.Scrollbar(self.content_frame, orient="horizontal", command=canvas.xview)
+        
+        scrollable_frame = tk.Frame(canvas, bg="#ffffff")
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
+
+        # Pack scrollbars and canvas
+        scrollbar_y.pack(side="right", fill="y")
+        scrollbar_x.pack(side="bottom", fill="x")
+        canvas.pack(side="left", fill="both", expand=True)
+
+        # Column headers
         columns = ["Customer ID", "Name", "Address", "Village", "Brand"]
+        column_widths = [100, 200, 300, 140, 140]
+        
+        # Create header row
+        for col_idx, col_name in enumerate(columns):
+            header_label = tk.Label(
+                scrollable_frame, 
+                text=col_name, 
+                font=("Segoe UI", 10, "bold"),
+                bg="#e1f5fe",
+                fg="#000000",
+                borderwidth=1,
+                relief="solid",
+                padx=5,
+                pady=5,
+                width=column_widths[col_idx]//8 if col_idx < len(column_widths) else 10
+            )
+            header_label.grid(row=0, column=col_idx, sticky="nsew", padx=0, pady=0)
 
-        # Use clam theme for better styling on Windows
-        style = ttk.Style()
-        try:
-            style.theme_use('clam')
-        except Exception:
-            pass
-        style.configure("Custom.Treeview", font=("Segoe UI", 12, "bold"), rowheight=30, background="#ffffff", fieldbackground="#ffffff")
-        style.configure("Custom.Treeview.Heading", font=("Segoe UI", 12, "bold"), background="#eef3fb")
-        style.map('Custom.Treeview', background=[('selected', '#cce5ff')])
+        # Function to create grid cell
+        def create_grid_cell(parent, text, row, col, bg_color="#ffffff", fg_color="#000000"):
+            cell_label = tk.Label(
+                parent,
+                text=text,
+                font=("Segoe UI", 9),
+                bg=bg_color,
+                fg=fg_color,
+                borderwidth=1,
+                relief="solid",
+                padx=3,
+                pady=3,
+                anchor="w",
+                width=column_widths[col]//8 if col < len(column_widths) else 10
+            )
+            cell_label.grid(row=row, column=col, sticky="nsew", padx=0, pady=0)
+            return cell_label
 
-        tree = ttk.Treeview(table_frame, columns=columns, show="headings", style="Custom.Treeview", selectmode="browse")
-        tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-
-        # Vertical scrollbar
-        vsb = ttk.Scrollbar(table_frame, orient="vertical", command=tree.yview)
-        vsb.pack(side=tk.RIGHT, fill=tk.Y)
-        tree.configure(yscrollcommand=vsb.set)
-
-        # Horizontal scrollbar
-        hsb = ttk.Scrollbar(table_frame, orient="horizontal", command=tree.xview)
-        hsb.pack(side=tk.BOTTOM, fill=tk.X)
-        tree.configure(xscrollcommand=hsb.set)
-
-        # Set column headings, widths and add sorting
-        for col in columns:
-            tree.heading(col, text=col, command=lambda c=col: sort_column(tree, c, False))
-            if col in ("Address", "Name"):
-                tree.column(col, width=300, anchor="w")
-            else:
-                tree.column(col, width=140, anchor="center")
-
-        # Make mouse-wheel scroll the tree when hovered
-        def _on_mousewheel(event):
-            # Windows and Mac
-            if hasattr(event, 'delta') and event.delta:
-                tree.yview_scroll(int(-1 * (event.delta / 120)), 'units')
-            else:
-                # Linux (Button-4/5)
-                if event.num == 4:
-                    tree.yview_scroll(-1, 'units')
-                elif event.num == 5:
-                    tree.yview_scroll(1, 'units')
-
-        def _bind_scroll(e):
-            tree.bind_all('<MouseWheel>', _on_mousewheel)
-            tree.bind_all('<Button-4>', _on_mousewheel)
-            tree.bind_all('<Button-5>', _on_mousewheel)
-
-        def _unbind_scroll(e):
-            tree.unbind_all('<MouseWheel>')
-            tree.unbind_all('<Button-4>')
-            tree.unbind_all('<Button-5>')
-
-        tree.bind('<Enter>', _bind_scroll)
-        tree.bind('<Leave>', _unbind_scroll)
-
-        # helper to populate tree and keep a map for details
-        detail_map = {}
-
-        # Configure simple zebra striping tags
-        tree.tag_configure('odd', background='#ffffff')
-        tree.tag_configure('even', background='#f6f6f6')
+        # Store references for data rows
+        self.items_grid_labels = []
+        self.items_detail_map = {}
 
         def populate(rows):
-            # clear
-            for i in tree.get_children():
-                tree.delete(i)
-            detail_map.clear()
+            # Clear existing data rows
+            for row_labels in self.items_grid_labels:
+                for label in row_labels:
+                    label.destroy()
+            self.items_grid_labels.clear()
+            self.items_detail_map.clear()
 
-            for idx, row in enumerate(rows):
-                vals = [
+            for row_idx, row in enumerate(rows):
+                grid_row = row_idx + 1  # +1 because row 0 is header
+                
+                # Alternate row colors for better readability
+                bg_color = '#ffffff' if row_idx % 2 == 0 else '#f6f6f6'
+                fg_color = '#000000'
+
+                # Create cells for this row
+                values = [
                     row.get("customer_id") or "",
                     row.get("customer_name") or "",
                     row.get("customer_address") or "",
                     row.get("village_name") or "",
                     row.get("brand") or ""
                 ]
-                tag = 'even' if idx % 2 == 0 else 'odd'
-                iid = tree.insert("", "end", values=vals, tags=(tag,))
-                detail_map[iid] = row
 
-        # Double-click opens a scrollable, styled details popup
-        def on_double_click(event):
-            item = tree.focus()
-            if not item:
-                return
-            data = detail_map.get(item)
-            if not data:
-                return
-            self.show_customer_details(data, self.content_frame)
+                row_labels = []
+                for col_idx, value in enumerate(values):
+                    cell_label = create_grid_cell(scrollable_frame, str(value), grid_row, col_idx, bg_color, fg_color)
+                    # Bind double-click to open details
+                    cell_label.bind("<Double-1>", lambda e, r=row: self.show_customer_details(r, self.content_frame))
+                    row_labels.append(cell_label)
 
-        tree.bind("<Double-1>", on_double_click)
+                self.items_grid_labels.append(row_labels)
+                self.items_detail_map[grid_row] = row
+
+        # Make columns expandable
+        for col_idx in range(len(columns)):
+            scrollable_frame.grid_columnconfigure(col_idx, weight=1)
 
         # Fetch data and populate
         rows = get_all_customer_items()
@@ -1092,11 +1208,12 @@ class MainWindow:
         column_widths = [60, 120, 120, 150, 100, 200]
         
         # Create header row
+        self.installment_header_cells = []
         for col_idx, col_name in enumerate(columns):
             header_label = tk.Label(
                 scrollable_frame, 
                 text=col_name, 
-                font=("Segoe UI", 10, "bold"),
+                font=("Segoe UI", int(self.base_header_font_size * self.zoom_level), "bold"),
                 bg="#e1f5fe",
                 fg="#000000",
                 borderwidth=1,
@@ -1106,13 +1223,14 @@ class MainWindow:
                 width=column_widths[col_idx]//8 if col_idx < len(column_widths) else 10
             )
             header_label.grid(row=0, column=col_idx, sticky="nsew", padx=0, pady=0)
+            self.installment_header_cells.append(header_label)
 
         # Function to create grid cell
         def create_grid_cell(parent, text, row, col, bg_color="#ffffff", fg_color="#000000"):
             cell_label = tk.Label(
                 parent,
                 text=text,
-                font=("Segoe UI", 9),
+                font=("Segoe UI", int(self.base_font_size * self.zoom_level)),
                 bg=bg_color,
                 fg=fg_color,
                 borderwidth=1,
@@ -1126,6 +1244,7 @@ class MainWindow:
             return cell_label
 
         # Populate grid with installment data
+        self.installment_grid_cells = []  # Store installment grid cells for zoom updates
         for row_idx, inst in enumerate(installments):
             grid_row = row_idx + 1  # +1 because row 0 is header
             
@@ -1152,6 +1271,7 @@ class MainWindow:
 
             for col_idx, value in enumerate(values):
                 cell_label = create_grid_cell(scrollable_frame, str(value), grid_row, col_idx, bg_color, fg_color)
+                self.installment_grid_cells.append(cell_label)  # Store for zoom updates
                 # Make cells clickable for potential future functionality
                 cell_label.bind("<Double-1>", lambda e: None)
 
@@ -1286,11 +1406,12 @@ class MainWindow:
         column_widths = [80, 120, 100, 100, 200, 150, 100, 100, 100, 120, 120, 80]
         
         # Create header row
+        self.header_cells = []
         for col_idx, col_name in enumerate(columns):
             header_label = tk.Label(
                 scrollable_frame, 
                 text=col_name, 
-                font=("Segoe UI", 10, "bold"),
+                font=("Segoe UI", int(self.base_header_font_size * self.zoom_level), "bold"),
                 bg="#e1f5fe",
                 fg="#000000",
                 borderwidth=1,
@@ -1300,6 +1421,7 @@ class MainWindow:
                 width=column_widths[col_idx]//10 if col_idx < len(column_widths) else 10
             )
             header_label.grid(row=0, column=col_idx, sticky="nsew", padx=0, pady=0)
+            self.header_cells.append(header_label)
 
         # Store references for data rows
         self.grid_labels = []
@@ -1310,7 +1432,7 @@ class MainWindow:
             cell_label = tk.Label(
                 parent,
                 text=text,
-                font=("Segoe UI", 9),
+                font=("Segoe UI", int(self.base_font_size * self.zoom_level)),
                 bg=bg_color,
                 fg=fg_color,
                 borderwidth=1,
@@ -1331,6 +1453,7 @@ class MainWindow:
                     label.destroy()
             self.grid_labels.clear()
             self.detail_map.clear()
+            self.grid_cells = []  # Store all grid cells for zoom updates
 
             for row_idx, row in enumerate(rows):
                 row_labels = []
@@ -1369,6 +1492,7 @@ class MainWindow:
                 for col_idx, value in enumerate(values):
                     cell_label = create_grid_cell(scrollable_frame, str(value), grid_row, col_idx, bg_color, fg_color)
                     row_labels.append(cell_label)
+                    self.grid_cells.append(cell_label)  # Store for zoom updates
                     
                     # Bind double-click to open details
                     cell_label.bind("<Double-1>", lambda e, r=row: self.show_customer_details(r, parent=self.content_frame))
@@ -1529,7 +1653,7 @@ class MainWindow:
         """Open a dialog listing all individual payment records with customer details."""
         dlg = tk.Toplevel(self.root)
         dlg.title("Payment Records")
-        dlg.geometry("900x520")
+        dlg.geometry("1200x700")
 
         top = tk.Frame(dlg)
         top.pack(fill=tk.X, padx=8, pady=6)
@@ -1543,17 +1667,67 @@ class MainWindow:
         name_e = tk.Entry(top, width=20)
         name_e.pack(side=tk.LEFT, padx=6)
 
-        # Treeview
-        cols = ["Payment ID","Date","Customer ID","Name","Phone","Item ID","Brand","Amount Paid","Remaining"]
-        tree = ttk.Treeview(dlg, columns=cols, show="headings")
-        for c in cols:
-            tree.heading(c, text=c)
-            tree.column(c, width=100, anchor='center')
-        tree.pack(fill=tk.BOTH, expand=True, padx=8, pady=6)
+        # Create scrollable canvas for the grid
+        canvas = tk.Canvas(dlg, bg="#ffffff")
+        scrollbar_y = ttk.Scrollbar(dlg, orient="vertical", command=canvas.yview)
+        scrollbar_x = ttk.Scrollbar(dlg, orient="horizontal", command=canvas.xview)
+        
+        scrollable_frame = tk.Frame(canvas, bg="#ffffff")
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
 
-        vsb = ttk.Scrollbar(dlg, orient="vertical", command=tree.yview)
-        vsb.pack(side=tk.RIGHT, fill=tk.Y)
-        tree.configure(yscrollcommand=vsb.set)
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
+
+        # Pack scrollbars and canvas
+        scrollbar_y.pack(side="right", fill="y")
+        scrollbar_x.pack(side="bottom", fill="x")
+        canvas.pack(side="left", fill="both", expand=True)
+
+        # Column headers
+        columns = ["Payment ID", "Date", "Customer ID", "Name", "Phone", "Item ID", "Brand", "Amount Paid", "Remaining"]
+        column_widths = [100, 100, 100, 150, 100, 80, 120, 100, 100]
+        
+        # Create header row
+        self.records_header_cells = []
+        for col_idx, col_name in enumerate(columns):
+            header_label = tk.Label(
+                scrollable_frame, 
+                text=col_name, 
+                font=("Segoe UI", int(self.base_header_font_size * self.zoom_level), "bold"),
+                bg="#e1f5fe",
+                fg="#000000",
+                borderwidth=1,
+                relief="solid",
+                padx=5,
+                pady=5,
+                width=column_widths[col_idx]//8 if col_idx < len(column_widths) else 10
+            )
+            header_label.grid(row=0, column=col_idx, sticky="nsew", padx=0, pady=0)
+            self.records_header_cells.append(header_label)
+
+        # Function to create grid cell
+        def create_grid_cell(parent, text, row, col, bg_color="#ffffff", fg_color="#000000"):
+            cell_label = tk.Label(
+                parent,
+                text=text,
+                font=("Segoe UI", int(self.base_font_size * self.zoom_level)),
+                bg=bg_color,
+                fg=fg_color,
+                borderwidth=1,
+                relief="solid",
+                padx=3,
+                pady=3,
+                anchor="w",
+                width=column_widths[col]//8 if col < len(column_widths) else 10
+            )
+            cell_label.grid(row=row, column=col, sticky="nsew", padx=0, pady=0)
+            return cell_label
+
+        # Store references for data rows
+        self.records_grid_labels = []
 
         def load_records():
             from models.payment_model import get_all_payments
@@ -1581,23 +1755,50 @@ class MainWindow:
                 filters["payment_to"] = convert_date_format(to_e.get().strip())
             if name_e.get().strip():
                 filters["customer_name"] = name_e.get().strip()
+            
             rows = get_all_payments(filters)
-            for i in tree.get_children():
-                tree.delete(i)
-            for r in rows:
-                tree.insert("", "end", values=[
+            
+            # Clear existing data rows
+            for row_labels in self.records_grid_labels:
+                for label in row_labels:
+                    label.destroy()
+            self.records_grid_labels.clear()
+            self.records_grid_cells = []  # Store records grid cells for zoom updates
+
+            # Populate grid with payment data
+            for row_idx, r in enumerate(rows):
+                grid_row = row_idx + 1  # +1 because row 0 is header
+                
+                # All payment records are successful payments, so use green color
+                bg_color = '#d4edda'
+                fg_color = '#155724'
+
+                # Create cells for this row
+                values = [
                     r.get('payment_id') or r.get('id') or '',
-                    r.get('payment_date'),
+                    r.get('payment_date') or '',
                     r.get('customer_id') or '',
                     r.get('customer_name') or '',
                     r.get('customer_phone') or '',
                     r.get('item_id') or '',
                     f"{r.get('brand') or ''} {r.get('model') or ''}".strip(),
-                    r.get('amount_paid') or '',
-                    r.get('remaining_amount') or ''
-                ])
+                    f"₹{r.get('amount_paid') or 0:.0f}",
+                    f"₹{r.get('remaining_amount') or 0:.0f}"
+                ]
+
+                row_labels = []
+                for col_idx, value in enumerate(values):
+                    cell_label = create_grid_cell(scrollable_frame, str(value), grid_row, col_idx, bg_color, fg_color)
+                    row_labels.append(cell_label)
+                    self.records_grid_cells.append(cell_label)  # Store for zoom updates
+
+                self.records_grid_labels.append(row_labels)
 
         tk.Button(top, text="🔄 Reload", command=load_records, bg="#2ecc71", fg="white").pack(side=tk.LEFT, padx=8)
         tk.Button(top, text="Close", command=dlg.destroy, bg="#e74c3c", fg="white").pack(side=tk.RIGHT, padx=8)
+
+        # Make columns expandable
+        for col_idx in range(len(columns)):
+            scrollable_frame.grid_columnconfigure(col_idx, weight=1)
 
         load_records()
