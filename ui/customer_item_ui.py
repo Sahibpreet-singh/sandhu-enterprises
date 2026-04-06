@@ -73,10 +73,10 @@ class CustomerItemUI:
         self.remarks_entry.grid(row=row, column=1, pady=2)
         row += 1
 
-        tk.Label(form, text="Entry Date (YYYY-MM-DD):").grid(row=row, column=0, sticky="e")
+        tk.Label(form, text="Entry Date (DD-MM-YYYY):").grid(row=row, column=0, sticky="e")
         self.date_entry = tk.Entry(form, width=40)
         self.date_entry.grid(row=row, column=1, pady=2)
-        self.date_entry.insert(0, date.today().isoformat())
+        self.date_entry.insert(0, date.today().strftime('%d-%m-%Y'))
         row += 1
 
         tk.Label(form, text="Village:").grid(row=row, column=0, sticky="e")
@@ -273,10 +273,16 @@ class CustomerItemUI:
         entry_date_val = self.date_entry.get().strip() if hasattr(self, 'date_entry') else ''
         if entry_date_val:
             try:
-                datetime.strptime(entry_date_val, "%Y-%m-%d")
-                entry_date_str = entry_date_val
+                try:
+                    # Try DD-MM-YYYY first
+                    parsed_date = datetime.strptime(entry_date_val, "%d-%m-%Y")
+                    entry_date_str = parsed_date.strftime('%Y-%m-%d')
+                except ValueError:
+                    # Try YYYY-MM-DD
+                    datetime.strptime(entry_date_val, "%Y-%m-%d")
+                    entry_date_str = entry_date_val
             except ValueError:
-                messagebox.showerror("Error", "Entry Date must be YYYY-MM-DD")
+                messagebox.showerror("Error", "Entry Date must be DD-MM-YYYY or YYYY-MM-DD")
                 return
 
         customer_id = add_customer(

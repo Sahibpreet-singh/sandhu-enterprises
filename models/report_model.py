@@ -65,8 +65,8 @@ def search_customer_items(filters=None):
     - status: 'Paid' | 'Unpaid' | 'All' (default 'All')
     - due_min: minimum due amount (numeric)
     - due_max: maximum due amount (numeric)
-    - payment_from: payment date from (YYYY-MM-DD)
-    - payment_to: payment date to (YYYY-MM-DD)
+    - payment_from: payment date from (DD-MM-YYYY or YYYY-MM-DD)
+    - payment_to: payment date to (DD-MM-YYYY or YYYY-MM-DD)
 
     Returns list of dict rows including computed fields: total_paid, due_amount, paid_status
     """

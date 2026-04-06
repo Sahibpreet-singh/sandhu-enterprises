@@ -330,9 +330,9 @@ class MainWindow:
         amount_entry = tk.Entry(dlg)
         amount_entry.pack()
 
-        tk.Label(dlg, text="Payment Date (YYYY-MM-DD):").pack()
+        tk.Label(dlg, text="Payment Date (DD-MM-YYYY):").pack()
         date_entry = tk.Entry(dlg)
-        date_entry.insert(0, date.today().isoformat())
+        date_entry.insert(0, date.today().strftime('%d-%m-%Y'))
         date_entry.pack()
 
         def save_payment():
@@ -353,12 +353,18 @@ class MainWindow:
                 return
             payment_date = date_entry.get().strip()
             try:
-                # basic date format check
+                # basic date format check - accept DD-MM-YYYY or YYYY-MM-DD
                 if payment_date:
                     from datetime import datetime as _dt
-                    _dt.strptime(payment_date, '%Y-%m-%d')
+                    try:
+                        # Try DD-MM-YYYY first
+                        parsed_date = _dt.strptime(payment_date, '%d-%m-%Y')
+                        payment_date = parsed_date.strftime('%Y-%m-%d')
+                    except ValueError:
+                        # Try YYYY-MM-DD
+                        _dt.strptime(payment_date, '%Y-%m-%d')
             except ValueError:
-                messagebox.showerror("Error", "Payment date must be YYYY-MM-DD")
+                messagebox.showerror("Error", "Payment date must be DD-MM-YYYY or YYYY-MM-DD")
                 return
             from models.payment_model import add_payment
             remaining = add_payment(r.get('item_id'), payment_date, amt, r.get('item_amount'))
@@ -799,7 +805,7 @@ class MainWindow:
             remarks_e.grid(row=4, column=1, padx=8, pady=6)
             remarks_e.insert(0, data.get('customer_remarks') or "")
 
-            tk.Label(edit, text="Entry Date (YYYY-MM-DD):").grid(row=5, column=0, padx=8, pady=6, sticky="e")
+            tk.Label(edit, text="Entry Date (DD-MM-YYYY):").grid(row=5, column=0, padx=8, pady=6, sticky="e")
             entry_date_e = tk.Entry(edit, width=40)
             entry_date_e.grid(row=5, column=1, padx=8, pady=6)
             entry_date_e.insert(0, data.get('entry_date') or "")
@@ -853,10 +859,25 @@ class MainWindow:
                             return
 
                 remarks = remarks_e.get().strip() or None
-                entry_date = entry_date_e.get().strip() or None
+                entry_date_str = entry_date_e.get().strip() or None
+                
+                # Validate and convert entry date
+                if entry_date_str:
+                    try:
+                        from datetime import datetime as _dt
+                        try:
+                            # Try DD-MM-YYYY first
+                            parsed_date = _dt.strptime(entry_date_str, '%d-%m-%Y')
+                            entry_date_str = parsed_date.strftime('%Y-%m-%d')
+                        except ValueError:
+                            # Try YYYY-MM-DD
+                            _dt.strptime(entry_date_str, '%Y-%m-%d')
+                    except ValueError:
+                        messagebox.showerror("Error", "Entry Date must be DD-MM-YYYY or YYYY-MM-DD")
+                        return
 
                 try:
-                    update_customer(customer_id, name, phone, address_text, remarks, address_id, village_id, entry_date)
+                    update_customer(customer_id, name, phone, address_text, remarks, address_id, village_id, entry_date_str)
                 except Exception as e:
                     messagebox.showerror("Error", str(e))
                     return
@@ -1172,11 +1193,11 @@ class MainWindow:
         due_max_entry = tk.Entry(filter_frame, width=10)
         due_max_entry.grid(row=1, column=7, padx=5, pady=5)
 
-        tk.Label(filter_frame, text="From Date (YYYY-MM-DD):", bg="white").grid(row=2, column=0, padx=5, pady=5, sticky="e")
+        tk.Label(filter_frame, text="From Date (DD-MM-YYYY):", bg="white").grid(row=2, column=0, padx=5, pady=5, sticky="e")
         from_date_entry = tk.Entry(filter_frame)
         from_date_entry.grid(row=2, column=1, padx=5, pady=5)
 
-        tk.Label(filter_frame, text="To Date (YYYY-MM-DD):", bg="white").grid(row=2, column=2, padx=5, pady=5, sticky="e")
+        tk.Label(filter_frame, text="To Date (DD-MM-YYYY):", bg="white").grid(row=2, column=2, padx=5, pady=5, sticky="e")
         to_date_entry = tk.Entry(filter_frame)
         to_date_entry.grid(row=2, column=3, padx=5, pady=5)
 
@@ -1268,9 +1289,29 @@ class MainWindow:
             except ValueError:
                 filters["due_max"] = None
 
-            # date filters (no validation here; DB expects YYYY-MM-DD)
+            # date filters - convert DD-MM-YYYY to YYYY-MM-DD for DB
             payment_from = from_date_entry.get().strip()
             payment_to = to_date_entry.get().strip()
+            
+            def convert_date_format(date_str):
+                if not date_str:
+                    return None
+                try:
+                    from datetime import datetime as _dt
+                    # Try DD-MM-YYYY first
+                    try:
+                        parsed = _dt.strptime(date_str, '%d-%m-%Y')
+                        return parsed.strftime('%Y-%m-%d')
+                    except ValueError:
+                        # Try YYYY-MM-DD
+                        _dt.strptime(date_str, '%Y-%m-%d')
+                        return date_str
+                except ValueError:
+                    return None
+            
+            payment_from = convert_date_format(payment_from)
+            payment_to = convert_date_format(payment_to)
+            
             if payment_from:
                 filters["payment_from"] = payment_from
             if payment_to:
@@ -1346,10 +1387,10 @@ class MainWindow:
 
         top = tk.Frame(dlg)
         top.pack(fill=tk.X, padx=8, pady=6)
-        tk.Label(top, text="From (YYYY-MM-DD):").pack(side=tk.LEFT)
+        tk.Label(top, text="From (DD-MM-YYYY):").pack(side=tk.LEFT)
         from_e = tk.Entry(top, width=12)
         from_e.pack(side=tk.LEFT, padx=6)
-        tk.Label(top, text="To (YYYY-MM-DD):").pack(side=tk.LEFT, padx=(10,0))
+        tk.Label(top, text="To (DD-MM-YYYY):").pack(side=tk.LEFT, padx=(10,0))
         to_e = tk.Entry(top, width=12)
         to_e.pack(side=tk.LEFT, padx=6)
         tk.Label(top, text="Name:").pack(side=tk.LEFT, padx=(10,0))
@@ -1371,10 +1412,27 @@ class MainWindow:
         def load_records():
             from models.payment_model import get_all_payments
             filters = {}
+            
+            def convert_date_format(date_str):
+                if not date_str:
+                    return None
+                try:
+                    from datetime import datetime as _dt
+                    # Try DD-MM-YYYY first
+                    try:
+                        parsed = _dt.strptime(date_str, '%d-%m-%Y')
+                        return parsed.strftime('%Y-%m-%d')
+                    except ValueError:
+                        # Try YYYY-MM-DD
+                        _dt.strptime(date_str, '%Y-%m-%d')
+                        return date_str
+                except ValueError:
+                    return None
+            
             if from_e.get().strip():
-                filters["payment_from"] = from_e.get().strip()
+                filters["payment_from"] = convert_date_format(from_e.get().strip())
             if to_e.get().strip():
-                filters["payment_to"] = to_e.get().strip()
+                filters["payment_to"] = convert_date_format(to_e.get().strip())
             if name_e.get().strip():
                 filters["customer_name"] = name_e.get().strip()
             rows = get_all_payments(filters)

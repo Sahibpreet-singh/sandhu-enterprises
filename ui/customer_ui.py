@@ -7,7 +7,7 @@ from datetime import date, datetime
 
 
 def today_str():
-    return date.today().isoformat()
+    return date.today().strftime('%d-%m-%Y')
 
 
 class AddCustomerWindow:
@@ -65,7 +65,7 @@ class AddCustomerWindow:
         self.remarks_entry = tk.Entry(self.win)
         self.remarks_entry.pack()
 
-        tk.Label(self.win, text="Entry Date (YYYY-MM-DD)").pack()
+        tk.Label(self.win, text="Entry Date (DD-MM-YYYY)").pack()
         self.date_entry = tk.Entry(self.win)
         self.date_entry.insert(0, today_str())
         self.date_entry.pack()
@@ -81,11 +81,16 @@ class AddCustomerWindow:
         entry_date = None
         if entry_date_str:
             try:
-                # Expect YYYY-MM-DD
-                datetime.strptime(entry_date_str, "%Y-%m-%d")
-                entry_date = entry_date_str
+                try:
+                    # Try DD-MM-YYYY first
+                    parsed_date = datetime.strptime(entry_date_str, "%d-%m-%Y")
+                    entry_date = parsed_date.strftime('%Y-%m-%d')
+                except ValueError:
+                    # Try YYYY-MM-DD
+                    datetime.strptime(entry_date_str, "%Y-%m-%d")
+                    entry_date = entry_date_str
             except ValueError:
-                messagebox.showerror("Error", "Entry Date must be YYYY-MM-DD")
+                messagebox.showerror("Error", "Entry Date must be DD-MM-YYYY or YYYY-MM-DD")
                 return
 
         # address/village selection
