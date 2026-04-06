@@ -1205,47 +1205,127 @@ class MainWindow:
         table_frame = tk.Frame(self.content_frame)
         table_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
+        # Create scrollable canvas for the grid
+        canvas = tk.Canvas(table_frame, bg="#ffffff")
+        scrollbar_y = ttk.Scrollbar(table_frame, orient="vertical", command=canvas.yview)
+        scrollbar_x = ttk.Scrollbar(self.content_frame, orient="horizontal", command=canvas.xview)
+        
+        scrollable_frame = tk.Frame(canvas, bg="#ffffff")
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
+
+        # Pack scrollbars and canvas
+        scrollbar_y.pack(side="right", fill="y")
+        scrollbar_x.pack(side="bottom", fill="x")
+        canvas.pack(side="left", fill="both", expand=True)
+
+        # Column headers
         columns = [
             "Customer ID", "Name", "Phone", "Village", "Address", "Item",
             "Total Amount", "Paid Amount", "Due Amount", "Installment Mode", "Total Installments", "Paid Status"
         ]
+        
+        column_widths = [80, 120, 100, 100, 200, 150, 100, 100, 100, 120, 120, 80]
+        
+        # Create header row
+        for col_idx, col_name in enumerate(columns):
+            header_label = tk.Label(
+                scrollable_frame, 
+                text=col_name, 
+                font=("Segoe UI", 10, "bold"),
+                bg="#e1f5fe",
+                fg="#000000",
+                borderwidth=1,
+                relief="solid",
+                padx=5,
+                pady=5,
+                width=column_widths[col_idx]//10 if col_idx < len(column_widths) else 10
+            )
+            header_label.grid(row=0, column=col_idx, sticky="nsew", padx=0, pady=0)
 
-        tree = ttk.Treeview(table_frame, columns=columns, show="headings")
-        tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        # Store references for data rows
+        self.grid_labels = []
+        self.detail_map = {}
 
-        # mapping of tree iid -> underlying row data for detail lookups
-        detail_map = {}
+        # Function to create grid cell
+        def create_grid_cell(parent, text, row, col, bg_color="#ffffff", fg_color="#000000"):
+            cell_label = tk.Label(
+                parent,
+                text=text,
+                font=("Segoe UI", 9),
+                bg=bg_color,
+                fg=fg_color,
+                borderwidth=1,
+                relief="solid",
+                padx=3,
+                pady=3,
+                anchor="w",
+                width=column_widths[col]//8 if col < len(column_widths) else 10
+            )
+            cell_label.grid(row=row, column=col, sticky="nsew", padx=0, pady=0)
+            return cell_label
 
-        # Double-click handler for Payments table to show installment details
-        def on_pay_double_click(event):
-            itm = tree.focus()
-            if not itm:
-                return
-            r = detail_map.get(itm)
-            if not r:
-                return
-            # Open the full customer/item detail dialog (includes payment history and Installment Details)
-            self.show_customer_details(r, parent=self.content_frame)
+        # Function to populate grid
+        def populate_grid(rows):
+            # Clear existing data rows
+            for row_labels in self.grid_labels:
+                for label in row_labels:
+                    label.destroy()
+            self.grid_labels.clear()
+            self.detail_map.clear()
 
-        tree.bind("<Double-1>", on_pay_double_click)
+            for row_idx, row in enumerate(rows):
+                row_labels = []
+                grid_row = row_idx + 1  # +1 because row 0 is header
+                
+                paid_status = row.get("paid_status", "Unpaid")
+                due_amount = row.get("due_amount") or 0
 
-        # Scrollbars
-        vsb = ttk.Scrollbar(table_frame, orient="vertical", command=tree.yview)
-        vsb.pack(side=tk.RIGHT, fill=tk.Y)
-        tree.configure(yscrollcommand=vsb.set)
+                # Determine row colors based on payment status
+                if paid_status == "Paid":
+                    bg_color = '#d4edda' if row_idx % 2 == 0 else '#c3e6cb'
+                    fg_color = '#155724'
+                elif paid_status == "Unpaid" and due_amount > 0:
+                    bg_color = '#f8d7da' if row_idx % 2 == 0 else '#f5c6cb'
+                    fg_color = '#721c24'
+                else:
+                    bg_color = '#fff3cd' if row_idx % 2 == 0 else '#ffeaa7'
+                    fg_color = '#856404'
 
-        hsb = ttk.Scrollbar(self.content_frame, orient="horizontal", command=tree.xview)
-        hsb.pack(side=tk.BOTTOM, fill=tk.X)
-        tree.configure(xscrollcommand=hsb.set)
+                # Create cells for this row
+                values = [
+                    row.get("customer_id") or "",
+                    row.get("customer_name") or "",
+                    row.get("customer_phone") or "",
+                    row.get("village_name") or "",
+                    row.get("customer_address") or "",
+                    f"{row.get('brand') or ''} {row.get('model') or ''}".strip(),
+                    f"₹{row.get('item_amount') or 0:,.0f}",
+                    f"₹{row.get('total_paid') or 0:,.0f}",
+                    f"₹{row.get('due_amount') or 0:,.0f}",
+                    row.get("installment_mode") or "",
+                    row.get("total_installments") or "",
+                    paid_status
+                ]
 
-        # Headings
-        for col in columns:
-            tree.heading(col, text=col)
-            # make Address column wider for readability
-            if col == "Address":
-                tree.column(col, width=240, anchor="center")
-            else:
-                tree.column(col, width=120, anchor="center")
+                for col_idx, value in enumerate(values):
+                    cell_label = create_grid_cell(scrollable_frame, str(value), grid_row, col_idx, bg_color, fg_color)
+                    row_labels.append(cell_label)
+                    
+                    # Bind double-click to open details
+                    cell_label.bind("<Double-1>", lambda e, r=row: self.show_customer_details(r, parent=self.content_frame))
+
+                self.grid_labels.append(row_labels)
+                self.detail_map[grid_row] = row
+
+        # Make columns expandable
+        for col_idx in range(len(columns)):
+            scrollable_frame.grid_columnconfigure(col_idx, weight=1)
 
         # ========== Search Logic ==========
         from models.report_model import get_all_customer_items  # You can modify this to include payment info
@@ -1321,31 +1401,24 @@ class MainWindow:
             from models.report_model import search_customer_items
             rows = search_customer_items(filters)
 
-            # Clear existing
-            for i in tree.get_children():
-                tree.delete(i)
+            # Populate the grid with data
+            populate_grid(rows)
 
-            for row in rows:
-                paid_status = row.get("paid_status", "Unpaid")
-                iid = tree.insert(
-                    "",
-                    "end",
-                    values=[
-                        row.get("customer_id") or "",
-                        row.get("customer_name") or "",
-                        row.get("customer_phone") or "",
-                        row.get("village_name") or "",
-                        row.get("customer_address") or "",
-                        f"{row.get('brand') or ''} {row.get('model') or ''}".strip(),
-                        row.get("item_amount") or "",
-                        row.get("total_paid") or 0,
-                        row.get("due_amount") or 0,
-                        row.get("installment_mode") or "",
-                        row.get("total_installments") or "",
-                        paid_status
-                    ]
-                )
-                detail_map[iid] = row
+            # Calculate and display summary statistics
+            total_records = len(rows)
+            total_amount = sum(row.get("item_amount") or 0 for row in rows)
+            total_paid = sum(row.get("total_paid") or 0 for row in rows)
+            total_due = sum(row.get("due_amount") or 0 for row in rows)
+            paid_records = sum(1 for row in rows if row.get("paid_status") == "Paid")
+            unpaid_records = sum(1 for row in rows if row.get("paid_status") == "Unpaid")
+
+            # Update summary labels
+            self.summary_labels["Total Records"].config(text=f"{total_records}")
+            self.summary_labels["Total Amount"].config(text=f"₹{total_amount:,.0f}")
+            self.summary_labels["Total Paid"].config(text=f"₹{total_paid:,.0f}")
+            self.summary_labels["Total Due"].config(text=f"₹{total_due:,.0f}")
+            self.summary_labels["Paid Records"].config(text=f"{paid_records}")
+            self.summary_labels["Unpaid Records"].config(text=f"{unpaid_records}")
                         
 
         # Search button
