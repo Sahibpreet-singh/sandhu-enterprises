@@ -58,6 +58,7 @@ def search_customer_items(filters=None):
 
     Supported filters (dict keys):
     - name: partial match against customer name
+    - phone: partial match against customer phone
     - village: partial match against village name
     - address: partial match against customer address
     - item: partial match against item brand/model
@@ -105,6 +106,9 @@ def search_customer_items(filters=None):
     if filters.get("name"):
         query += " AND LOWER(c.name) LIKE %s"
         params.append(f"%{filters['name'].lower()}%")
+    if filters.get("phone"):
+        query += " AND LOWER(c.phone) LIKE %s"
+        params.append(f"%{filters['phone'].lower()}%")
     if filters.get("village"):
         query += " AND LOWER(v.name) LIKE %s"
         params.append(f"%{filters['village'].lower()}%")

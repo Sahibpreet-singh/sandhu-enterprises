@@ -32,31 +32,31 @@ class MainWindow:
         tk.Label(
             header_frame,
             text="🏢 Sandhu Enterprises",
-            font=("Arial", 18, "bold"),
+            font=("Segoe UI", 20, "bold"),
             bg="#34495e",
             fg="white",
-            pady=10
-        ).pack(side=tk.LEFT, padx=20)
+            pady=15
+        ).pack(side=tk.LEFT, padx=25)
 
         tk.Label(
             header_frame,
             text="EMI Management System",
-            font=("Arial", 14),
+            font=("Segoe UI", 16),
             bg="#34495e",
             fg="#bdc3c7",
-            pady=10
-        ).pack(side=tk.LEFT, padx=10)
+            pady=15
+        ).pack(side=tk.LEFT, padx=15)
 
         # User info
         user_text = f"👤 {self.user.get('username', 'User')}" if self.user else "👤 Guest"
         tk.Label(
             header_frame,
             text=user_text,
-            font=("Arial", 10),
+            font=("Segoe UI", 12),
             bg="#34495e",
             fg="#ecf0f1",
-            pady=10
-        ).pack(side=tk.RIGHT, padx=20)
+            pady=15
+        ).pack(side=tk.RIGHT, padx=25)
 
     # ================= LEFT MENU =================
     def create_menu(self):
@@ -67,10 +67,10 @@ class MainWindow:
         tk.Label(
             menu_frame,
             text="📋 Menu",
-            font=("Arial", 14, "bold"),
+            font=("Segoe UI", 16, "bold"),
             bg="#34495e",
             fg="white",
-            pady=10
+            pady=15
         ).pack(fill=tk.X)
 
         buttons = [
@@ -85,7 +85,7 @@ class MainWindow:
             btn = tk.Button(
                 menu_frame,
                 text=text,
-                font=("Arial", 11, "bold"),
+                font=("Segoe UI", 12, "bold"),
                 width=20,
                 pady=12,
                 bg="#3498db",
@@ -97,6 +97,9 @@ class MainWindow:
                 command=command
             )
             btn.pack(pady=8, padx=10)
+            # Separator
+            sep = tk.Frame(menu_frame, height=1, bg="#7f8c8d")
+            sep.pack(fill=tk.X, padx=10)
             # Hover effect
             btn.bind("<Enter>", lambda e, b=btn: b.config(bg="#2980b9"))
             btn.bind("<Leave>", lambda e, b=btn: b.config(bg="#3498db"))
@@ -450,8 +453,8 @@ class MainWindow:
             style.theme_use('clam')
         except Exception:
             pass
-        style.configure("Custom.Treeview", font=("Segoe UI", 10), rowheight=26, background="#ffffff", fieldbackground="#ffffff")
-        style.configure("Custom.Treeview.Heading", font=("Segoe UI", 10, "bold"), background="#eef3fb")
+        style.configure("Custom.Treeview", font=("Segoe UI", 12, "bold"), rowheight=30, background="#ffffff", fieldbackground="#ffffff")
+        style.configure("Custom.Treeview.Heading", font=("Segoe UI", 12, "bold"), background="#eef3fb")
         style.map('Custom.Treeview', background=[('selected', '#cce5ff')])
 
         tree = ttk.Treeview(table_frame, columns=columns, show="headings", style="Custom.Treeview", selectmode="browse")
@@ -533,384 +536,7 @@ class MainWindow:
             data = detail_map.get(item)
             if not data:
                 return
-
-            dlg = tk.Toplevel(self.content_frame)
-            dlg.title(f"Customer {data.get('customer_id')} Details")
-            dlg.geometry("720x520")
-            dlg.transient(self.root)
-            dlg.grab_set()
-            dlg.resizable(True, True)
-
-            # Header
-            header = tk.Frame(dlg, bg="#f5f7fa")
-            header.pack(fill=tk.X)
-            tk.Label(header, text=str(data.get("customer_name") or ""), font=("Segoe UI", 14, "bold"), bg="#f5f7fa").pack(anchor="w", padx=12, pady=(8, 0))
-            tk.Label(header, text=f"ID: {data.get('customer_id') or ''}    •    Entry Date: {data.get('entry_date') or ''}", font=("Segoe UI", 9), bg="#f5f7fa").pack(anchor="w", padx=12, pady=(0, 8))
-
-            # Scrollable area
-            container = tk.Frame(dlg)
-            container.pack(fill=tk.BOTH, expand=True)
-
-            canvas = tk.Canvas(container, borderwidth=0, highlightthickness=0, bg="#ffffff")
-            vsb = ttk.Scrollbar(container, orient="vertical", command=canvas.yview)
-            vsb.pack(side=tk.RIGHT, fill=tk.Y)
-            canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-            canvas.configure(yscrollcommand=vsb.set)
-
-            inner = tk.Frame(canvas, bg="#ffffff")
-            canvas.create_window((0, 0), window=inner, anchor="nw")
-
-            def _on_frame_config(e):
-                canvas.configure(scrollregion=canvas.bbox("all"))
-            inner.bind('<Configure>', _on_frame_config)
-
-            # Mouse-wheel scrolling for the canvas
-            def _on_mousewheel(e):
-                if hasattr(e, 'delta') and e.delta:
-                    canvas.yview_scroll(int(-1 * (e.delta / 120)), 'units')
-                else:
-                    if getattr(e, 'num', None) == 4:
-                        canvas.yview_scroll(-1, 'units')
-                    elif getattr(e, 'num', None) == 5:
-                        canvas.yview_scroll(1, 'units')
-
-            def _bind_canvas_scroll(ev):
-                canvas.bind_all('<MouseWheel>', _on_mousewheel)
-                canvas.bind_all('<Button-4>', _on_mousewheel)
-                canvas.bind_all('<Button-5>', _on_mousewheel)
-
-            def _unbind_canvas_scroll(ev):
-                canvas.unbind_all('<MouseWheel>')
-                canvas.unbind_all('<Button-4>')
-                canvas.unbind_all('<Button-5>')
-
-            inner.bind('<Enter>', _bind_canvas_scroll)
-            inner.bind('<Leave>', _unbind_canvas_scroll)
-
-            fields = [
-                ("Customer ID", data.get("customer_id")),
-                ("Name", data.get("customer_name")),
-                ("Phone", data.get("customer_phone")),
-                ("Address", data.get("customer_address")),
-                ("Village", data.get("village_name")),
-                ("Remarks", data.get("customer_remarks")),
-                ("Entry Date", data.get("entry_date")),
-                ("Brand", data.get("brand")),
-                ("Model", data.get("model")),
-                ("Item Amount", data.get("item_amount")),
-                ("Advance", data.get("advance_amount")),
-                ("Finance", data.get("finance_amount")),
-                ("Interest (%)", (f"{data.get('interest_rate')}%" if ((data.get('interest_type','PERCENT') or '').upper().startswith('P')) else f"{data.get('interest_rate')} (amt)")),
-                ("Interest Type", (data.get('interest_type') or '').upper()),
-
-                ("Installment Amount", data.get("installment_amount")),
-                ("Installment Mode", data.get("installment_mode")),
-                ("Total Installments", data.get("total_installments")),
-                ("Guarantor Name", data.get("guarantor_name")),
-                ("Guarantor Phone", data.get("guarantor_phone")),
-                ("Guarantor Address", data.get("guarantor_address"))
-            ]
-
-            # Render fields in a side-by-side two-column layout with separators to mimic cells
-            # Split fields roughly in half so they display left/right to reduce vertical scrolling
-            half = (len(fields) + 1) // 2
-            left_fields = fields[:half]
-            right_fields = fields[half:]
-
-            # Make columns 1 and 3 expandable
-            inner.grid_columnconfigure(1, weight=1)
-            inner.grid_columnconfigure(3, weight=1)
-
-            # Prepare interest values: show either percent or amount in separate fields
-            interest_val = data.get('interest_rate')
-            interest_type = (data.get('interest_type') or '').upper()
-            interest_percent = f"{interest_val}%" if interest_val is not None and interest_type.startswith('P') else ""
-            interest_amount = f"{interest_val}" if interest_val is not None and not interest_type.startswith('P') else ""
-
-            # Sections: Customer, Item/Financial, Guarantor
-            sections = [
-                ("Customer Details", [
-                    ("Customer ID", data.get("customer_id")),
-                    ("Name", data.get("customer_name")),
-                    ("Phone", data.get("customer_phone")),
-                    ("Address", data.get("customer_address")),
-                    ("Village", data.get("village_name")),
-                    ("Remarks", data.get("customer_remarks")),
-                    ("Entry Date", data.get("entry_date")),
-                ]),
-                ("Item / Financial", [
-                    ("Brand", data.get("brand")),
-                    ("Model", data.get("model")),
-                    ("Item Amount", data.get("item_amount")),
-                    ("Advance", data.get("advance_amount")),
-                    ("Finance", data.get("finance_amount")),
-                    ("Interest (Percent)", interest_percent),
-                    ("Interest (Amount)", interest_amount),
-                    ("Interest Type", (data.get('interest_type') or '').upper()),
-                    ("Installment Amount", data.get("installment_amount")),
-                    ("Installment Mode", data.get("installment_mode")),
-                    ("Total Installments", data.get("total_installments")),
-                ]),
-                ("Guarantor", [
-                    ("Guarantor Name", data.get("guarantor_name")),
-                    ("Guarantor Phone", data.get("guarantor_phone")),
-                    ("Guarantor Address", data.get("guarantor_address")),
-                ])
-            ]
-
-            labels_map = {}
-            current_row = 0
-
-            for sec_title, sec_fields in sections:
-                # Section header
-                tk.Label(inner, text=sec_title, font=("Segoe UI", 11, "bold"), bg="#ffffff").grid(row=current_row, column=0, columnspan=4, sticky="w", padx=12, pady=(12,6))
-                current_row += 1
-
-                # split fields for two-column layout inside this section
-                half = (len(sec_fields) + 1) // 2
-                left_fields = sec_fields[:half]
-                right_fields = sec_fields[half:]
-
-                rows_sec = max(len(left_fields), len(right_fields))
-                for i in range(rows_sec):
-                    # Left column
-                    if i < len(left_fields):
-                        label_l, val_l = left_fields[i]
-                        tk.Label(inner, text=f"{label_l}:", anchor="e", width=18, font=("Segoe UI", 10, "bold"), bg="#ffffff").grid(row=current_row, column=0, sticky="e", padx=12, pady=(8,2))
-                        val_lbl_l = tk.Label(inner, text=str(val_l) if val_l is not None else "", anchor="w", justify="left", wraplength=320, font=("Segoe UI", 10), bg="#ffffff", bd=1, relief="groove")
-                        val_lbl_l.grid(row=current_row, column=1, sticky="we", padx=6, pady=(8,2))
-                        labels_map[label_l] = val_lbl_l
-                    else:
-                        tk.Label(inner, text="", bg="#ffffff").grid(row=current_row, column=0)
-                        tk.Label(inner, text="", bg="#ffffff").grid(row=current_row, column=1)
-
-                    # Right column
-                    if i < len(right_fields):
-                        label_r, val_r = right_fields[i]
-                        tk.Label(inner, text=f"{label_r}:", anchor="e", width=18, font=("Segoe UI", 10, "bold"), bg="#ffffff").grid(row=current_row, column=2, sticky="e", padx=12, pady=(8,2))
-                        val_lbl_r = tk.Label(inner, text=str(val_r) if val_r is not None else "", anchor="w", justify="left", wraplength=320, font=("Segoe UI", 10), bg="#ffffff", bd=1, relief="groove")
-                        val_lbl_r.grid(row=current_row, column=3, sticky="we", padx=6, pady=(8,2))
-                        labels_map[label_r] = val_lbl_r
-                    else:
-                        tk.Label(inner, text="", bg="#ffffff").grid(row=current_row, column=2)
-                        tk.Label(inner, text="", bg="#ffffff").grid(row=current_row, column=3)
-
-                    current_row += 1
-
-                # solid separator line for the section
-                sep = tk.Frame(inner, height=2, bg="#2c3e50")
-                sep.grid(row=current_row, column=0, columnspan=4, sticky="we", padx=8, pady=(8,0))
-                current_row += 1
-
-            # Payment history section
-            tk.Label(inner, text="Payment History", font=("Segoe UI", 12, "bold"), bg="#ffffff").grid(row=current_row, column=0, columnspan=4, sticky="w", padx=12, pady=(12,4))
-            current_row += 1
-
-            payments = []
-            item_id = data.get('item_id')
-            if item_id:
-                try:
-                    from models.payment_model import get_payments_by_item
-                    payments = get_payments_by_item(item_id)
-                except Exception:
-                    payments = []
-
-            if payments:
-                ph_cols = ["Date", "Amount Paid", "Remaining"]
-                ph_tree = ttk.Treeview(inner, columns=ph_cols, show="headings", height=6)
-                for pc in ph_cols:
-                    ph_tree.heading(pc, text=pc)
-                    ph_tree.column(pc, width=140, anchor="center")
-                ph_tree.grid(row=current_row, column=0, columnspan=4, sticky="we", padx=12, pady=(4,12))
-                for p in payments:
-                    ph_tree.insert("", "end", values=[p.get('payment_date'), p.get('amount_paid'), p.get('remaining_amount')])
-                current_row += 1
-            else:
-                tk.Label(inner, text="No payment history.", fg="#666", bg="#ffffff").grid(row=current_row, column=0, columnspan=4, sticky="w", padx=12, pady=(4,12))
-                current_row += 1
-
-            # -- Edit flow: open modal to edit basic customer fields
-            def open_edit_dialog():
-                from models.customer_model import get_customer_by_id, update_customer
-                from models.address_model import get_all_addresses, add_address
-                from models.village_model import get_all_villages, add_village
-
-                customer_id = data.get('customer_id')
-                if not customer_id:
-                    messagebox.showerror("Error", "Cannot edit: missing customer id")
-                    return
-
-                edit = tk.Toplevel(dlg)
-                edit.title(f"Edit Customer {customer_id}")
-                edit.transient(dlg)
-                edit.grab_set()
-                edit.resizable(False, False)
-
-                # Form
-                tk.Label(edit, text="Name:").grid(row=0, column=0, padx=8, pady=6, sticky="e")
-                name_e = tk.Entry(edit, width=40)
-                name_e.grid(row=0, column=1, padx=8, pady=6)
-                name_e.insert(0, data.get('customer_name') or "")
-
-                tk.Label(edit, text="Phone:").grid(row=1, column=0, padx=8, pady=6, sticky="e")
-                phone_e = tk.Entry(edit, width=40)
-                phone_e.grid(row=1, column=1, padx=8, pady=6)
-                phone_e.insert(0, data.get('customer_phone') or "")
-
-                tk.Label(edit, text="Address:").grid(row=2, column=0, padx=8, pady=6, sticky="e")
-                addresses = get_all_addresses()
-                address_list = [f"{a['address_id']} - {a['address']}" for a in addresses]
-                address_cb = ttk.Combobox(edit, values=address_list, width=38, state="normal")
-                address_cb.grid(row=2, column=1, padx=8, pady=6)
-                # set current value (prefer address_id if available)
-                if data.get('address_id'):
-                    current_addr = next((f"{a['address_id']} - {a['address']}" for a in addresses if a['address_id'] == data.get('address_id')), None)
-                    if current_addr:
-                        address_cb.set(current_addr)
-                else:
-                    address_cb.set(data.get('customer_address') or "")
-
-                tk.Label(edit, text="Village:").grid(row=3, column=0, padx=8, pady=6, sticky="e")
-                villages = get_all_villages()
-                village_list = [f"{v['village_id']} - {v['name']}" for v in villages]
-                village_cb = ttk.Combobox(edit, values=village_list, width=38, state="normal")
-                village_cb.grid(row=3, column=1, padx=8, pady=6)
-                if data.get('village_id'):
-                    current_vill = next((f"{v['village_id']} - {v['name']}" for v in villages if v['village_id'] == data.get('village_id')), None)
-                    if current_vill:
-                        village_cb.set(current_vill)
-                else:
-                    village_cb.set(data.get('village_name') or "")
-
-                tk.Label(edit, text="Remarks:").grid(row=4, column=0, padx=8, pady=6, sticky="e")
-                remarks_e = tk.Entry(edit, width=40)
-                remarks_e.grid(row=4, column=1, padx=8, pady=6)
-                remarks_e.insert(0, data.get('customer_remarks') or "")
-
-                tk.Label(edit, text="Entry Date (YYYY-MM-DD):").grid(row=5, column=0, padx=8, pady=6, sticky="e")
-                entry_date_e = tk.Entry(edit, width=40)
-                entry_date_e.grid(row=5, column=1, padx=8, pady=6)
-                entry_date_e.insert(0, data.get('entry_date') or "")
-
-                # Buttons
-                btn_frame = tk.Frame(edit)
-                btn_frame.grid(row=6, column=0, columnspan=2, pady=(6,8))
-
-                def on_save():
-                    name = name_e.get().strip()
-                    if not name:
-                        messagebox.showerror("Error", "Name is required")
-                        return
-                    phone = phone_e.get().strip()
-
-                    # Address handling: if the user selected or typed an id - text pair, parse id
-                    address_val = address_cb.get().strip()
-                    address_id = None
-                    address_text = None
-                    if address_val:
-                        if " - " in address_val:
-                            try:
-                                address_id = int(address_val.split(" - ", 1)[0])
-                                address_text = address_val.split(" - ", 1)[1]
-                            except Exception:
-                                address_id = None
-                                address_text = address_val
-                        else:
-                            # create new address
-                            try:
-                                address_id = add_address(address_val)
-                                address_text = address_val
-                            except Exception as e:
-                                messagebox.showerror("Error", f"Failed to add address: {e}")
-                                return
-
-                    # Village handling similarly
-                    village_val = village_cb.get().strip()
-                    village_id = None
-                    if village_val:
-                        if " - " in village_val:
-                            try:
-                                village_id = int(village_val.split(" - ", 1)[0])
-                            except Exception:
-                                village_id = None
-                        else:
-                            try:
-                                village_id = add_village(village_val)
-                            except Exception as e:
-                                messagebox.showerror("Error", f"Failed to add village: {e}")
-                                return
-
-                    remarks = remarks_e.get().strip() or None
-                    entry_date = entry_date_e.get().strip() or None
-
-                    try:
-                        update_customer(customer_id, name, phone, address_text, remarks, address_id, village_id, entry_date)
-                    except Exception as e:
-                        messagebox.showerror("Error", str(e))
-                        return
-
-                    # Refresh local data and UI
-                    new_data = get_customer_by_id(customer_id)
-                    if new_data:
-                        data.update(new_data)
-
-                    # Update displayed labels for changed fields
-                    labels_map.get('Name').config(text=str(data.get('customer_name') or ""))
-                    labels_map.get('Phone').config(text=str(data.get('customer_phone') or ""))
-                    labels_map.get('Address').config(text=str(data.get('customer_address') or ""))
-                    labels_map.get('Village').config(text=str(data.get('village_name') or ""))
-                    labels_map.get('Remarks').config(text=str(data.get('customer_remarks') or ""))
-                    labels_map.get('Entry Date').config(text=str(data.get('entry_date') or ""))
-
-                    # Refresh the main table
-                    rows = get_all_customer_items()
-                    populate(rows)
-
-                    edit.destroy()
-                    messagebox.showinfo("Success", "Customer updated successfully")
-
-                tk.Button(btn_frame, text="Save", command=on_save, bg="#27ae60", fg="white").pack(side=tk.LEFT, padx=6)
-                tk.Button(btn_frame, text="Cancel", command=edit.destroy).pack(side=tk.LEFT, padx=6)
-
-            # Bottom action bar with Close
-            action_bar = tk.Frame(dlg, bg="#ffffff")
-            action_bar.pack(fill=tk.X)
-            tk.Button(action_bar, text="Close", command=dlg.destroy, bg="#e74c3c", fg="white").pack(side=tk.RIGHT, padx=12, pady=8)
-            tk.Button(action_bar, text="Edit", command=open_edit_dialog, bg="#3498db", fg="white").pack(side=tk.RIGHT, padx=12, pady=8)
-            tk.Button(action_bar, text="Installment Details", command=lambda: self.show_installment_details(data.get('item_id'), dlg), bg="#8e44ad", fg="white").pack(side=tk.RIGHT, padx=12, pady=8)
-
-            # Permanent delete (superadmin only)
-            customer_id = data.get('customer_id')
-            def on_permanent_delete():
-                # Prompt for superadmin password (hidden)
-                pwd = simpledialog.askstring("Superadmin Password", "Enter superadmin password to permanently delete customer:", show="*")
-                if pwd is None:
-                    return
-                if pwd != SUPERADMIN_PASSWORD:
-                    messagebox.showerror("Error", "Incorrect superadmin password")
-                    return
-
-                if not messagebox.askyesno("Confirm Deletion", "Permanently delete this customer and all related records? This action cannot be undone."):
-                    return
-
-                try:
-                    from models.customer_model import delete_customer
-                    delete_customer(customer_id)
-                except Exception as e:
-                    messagebox.showerror("Error", f"Failed to delete customer: {e}")
-                    return
-
-                # Refresh main table and close dialog
-                rows = get_all_customer_items()
-                populate(rows)
-                dlg.destroy()
-                messagebox.showinfo("Success", "Customer permanently deleted")
-
-            if self.user and (self.user.get('role') or '').lower() == 'superadmin':
-                tk.Button(action_bar, text="Delete (Permanent)", command=on_permanent_delete, bg="#c0392b", fg="white").pack(side=tk.RIGHT, padx=12, pady=8)
-
-            # Close on Escape
-            dlg.bind('<Escape>', lambda e: dlg.destroy())
+            self.show_customer_details(data, self.content_frame)
 
         tree.bind("<Double-1>", on_double_click)
 
@@ -918,27 +544,11 @@ class MainWindow:
         rows = get_all_customer_items()
         populate(rows)
 
-        # Initial load
-        # Note: records intentionally show a simplified list; double-click a row to open full details
-        # Populate with all rows initially
-        rows = get_all_customer_items()
-        populate(rows)
-
-        # Initial load
-        # Note: records intentionally show a simplified list; double-click a row to open full details
-        # Populate with all rows initially
-        rows = get_all_customer_items()
-        populate(rows)
-
-
-
-
-
     def show_customer_details(self, data, parent=None):
         """Show the customer/item detail dialog (used by Records and Payments)."""
         dlg = tk.Toplevel(parent or self.root)
         dlg.title(f"Customer {data.get('customer_id')} Details")
-        dlg.geometry("720x520")
+        dlg.geometry("1000x700")
         dlg.transient(self.root)
         dlg.grab_set()
         dlg.resizable(True, True)
@@ -1064,48 +674,48 @@ class MainWindow:
         current_row = 0
 
         for sec_title, sec_fields in sections:
-            # Section header
-            tk.Label(inner, text=sec_title, font=("Segoe UI", 11, "bold"), bg="#ffffff").grid(row=current_row, column=0, columnspan=4, sticky="w", padx=12, pady=(12,6))
-            current_row += 1
-
-            # split fields for two-column layout inside this section
-            half = (len(sec_fields) + 1) // 2
-            left_fields = sec_fields[:half]
-            right_fields = sec_fields[half:]
-
-            rows_sec = max(len(left_fields), len(right_fields))
-            for i in range(rows_sec):
-                # Left column
-                if i < len(left_fields):
-                    label_l, val_l = left_fields[i]
-                    tk.Label(inner, text=f"{label_l}:", anchor="e", width=18, font=("Segoe UI", 10, "bold"), bg="#ffffff").grid(row=current_row, column=0, sticky="e", padx=12, pady=(8,2))
-                    val_lbl_l = tk.Label(inner, text=str(val_l) if val_l is not None else "", anchor="w", justify="left", wraplength=320, font=("Segoe UI", 10), bg="#ffffff", bd=1, relief="groove")
-                    val_lbl_l.grid(row=current_row, column=1, sticky="we", padx=6, pady=(8,2))
-                    labels_map[label_l] = val_lbl_l
-                else:
-                    tk.Label(inner, text="", bg="#ffffff").grid(row=current_row, column=0)
-                    tk.Label(inner, text="", bg="#ffffff").grid(row=current_row, column=1)
-
-                # Right column
-                if i < len(right_fields):
-                    label_r, val_r = right_fields[i]
-                    tk.Label(inner, text=f"{label_r}:", anchor="e", width=18, font=("Segoe UI", 10, "bold"), bg="#ffffff").grid(row=current_row, column=2, sticky="e", padx=12, pady=(8,2))
-                    val_lbl_r = tk.Label(inner, text=str(val_r) if val_r is not None else "", anchor="w", justify="left", wraplength=320, font=("Segoe UI", 10), bg="#ffffff", bd=1, relief="groove")
-                    val_lbl_r.grid(row=current_row, column=3, sticky="we", padx=6, pady=(8,2))
-                    labels_map[label_r] = val_lbl_r
-                else:
-                    tk.Label(inner, text="", bg="#ffffff").grid(row=current_row, column=2)
-                    tk.Label(inner, text="", bg="#ffffff").grid(row=current_row, column=3)
-
+                # Section header
+                tk.Label(inner, text=sec_title, font=("Segoe UI", 15, "bold"), bg="#ffffff").grid(row=current_row, column=0, columnspan=4, sticky="w", padx=12, pady=(12,6))
                 current_row += 1
 
-            # solid separator line for the section
-            sep = tk.Frame(inner, height=2, bg="#2c3e50")
-            sep.grid(row=current_row, column=0, columnspan=4, sticky="we", padx=8, pady=(8,0))
-            current_row += 1
+                # split fields for two-column layout inside this section
+                half = (len(sec_fields) + 1) // 2
+                left_fields = sec_fields[:half]
+                right_fields = sec_fields[half:]
+
+                rows_sec = max(len(left_fields), len(right_fields))
+                for i in range(rows_sec):
+                    # Left column
+                    if i < len(left_fields):
+                        label_l, val_l = left_fields[i]
+                        tk.Label(inner, text=f"{label_l}:", anchor="e", width=18, font=("Segoe UI", 14, "bold"), bg="#ffffff").grid(row=current_row, column=0, sticky="e", padx=12, pady=(8,2))
+                        val_lbl_l = tk.Label(inner, text=str(val_l) if val_l is not None else "", anchor="w", justify="left", wraplength=320, font=("Segoe UI", 14, "bold"), bg="#ffffff", bd=1, relief="groove")
+                        val_lbl_l.grid(row=current_row, column=1, sticky="we", padx=6, pady=(8,2))
+                        labels_map[label_l] = val_lbl_l
+                    else:
+                        tk.Label(inner, text="", bg="#ffffff").grid(row=current_row, column=0)
+                        tk.Label(inner, text="", bg="#ffffff").grid(row=current_row, column=1)
+
+                    # Right column
+                    if i < len(right_fields):
+                        label_r, val_r = right_fields[i]
+                        tk.Label(inner, text=f"{label_r}:", anchor="e", width=18, font=("Segoe UI", 14, "bold"), bg="#ffffff").grid(row=current_row, column=2, sticky="e", padx=12, pady=(8,2))
+                        val_lbl_r = tk.Label(inner, text=str(val_r) if val_r is not None else "", anchor="w", justify="left", wraplength=320, font=("Segoe UI", 14, "bold"), bg="#ffffff", bd=1, relief="groove")
+                        val_lbl_r.grid(row=current_row, column=3, sticky="we", padx=6, pady=(8,2))
+                        labels_map[label_r] = val_lbl_r
+                    else:
+                        tk.Label(inner, text="", bg="#ffffff").grid(row=current_row, column=2)
+                        tk.Label(inner, text="", bg="#ffffff").grid(row=current_row, column=3)
+
+                    current_row += 1
+
+                # solid separator line for the section
+                sep = tk.Frame(inner, height=2, bg="#2c3e50")
+                sep.grid(row=current_row, column=0, columnspan=4, sticky="we", padx=8, pady=(8,0))
+                current_row += 1
 
         # Payment history section
-        tk.Label(inner, text="Payment History", font=("Segoe UI", 12, "bold"), bg="#ffffff").grid(row=current_row, column=0, columnspan=4, sticky="w", padx=12, pady=(12,4))
+        tk.Label(inner, text="Payment History", font=("Segoe UI", 16, "bold"), bg="#ffffff").grid(row=current_row, column=0, columnspan=4, sticky="w", padx=12, pady=(12,4))
         current_row += 1
 
         payments = []
@@ -1119,7 +729,7 @@ class MainWindow:
 
         if payments:
             ph_cols = ["Date", "Amount Paid", "Remaining"]
-            ph_tree = ttk.Treeview(inner, columns=ph_cols, show="headings", height=6)
+            ph_tree = ttk.Treeview(inner, columns=ph_cols, show="headings", height=6, style="Custom.Treeview")
             for pc in ph_cols:
                 ph_tree.heading(pc, text=pc)
                 ph_tree.column(pc, width=140, anchor="center")
@@ -1128,7 +738,7 @@ class MainWindow:
                 ph_tree.insert("", "end", values=[p.get('payment_date'), p.get('amount_paid'), p.get('remaining_amount')])
             current_row += 1
         else:
-            tk.Label(inner, text="No payment history.", fg="#666", bg="#ffffff").grid(row=current_row, column=0, columnspan=4, sticky="w", padx=12, pady=(4,12))
+            tk.Label(inner, text="No payment history.", fg="#666", bg="#ffffff", font=("Segoe UI", 14)).grid(row=current_row, column=0, columnspan=4, sticky="w", padx=12, pady=(4,12))
             current_row += 1
 
         # -- Edit flow: open modal to edit basic customer fields
@@ -1431,13 +1041,34 @@ class MainWindow:
         # Build dialog
         dlg2 = tk.Toplevel(parent or self.root)
         dlg2.title(f"Installment Details for Item {item_id}")
-        dlg2.geometry('900x520')
+        dlg2.geometry('1200x700')
+
+        # Style for installment table
+        style = ttk.Style()
+        style.configure("Installment.Treeview", font=("Segoe UI", 12, "bold"), rowheight=30, background="#ffffff", fieldbackground="#ffffff")
+        style.configure("Installment.Treeview.Heading", font=("Segoe UI", 12, "bold"), background="#eef3fb")
+        style.map('Installment.Treeview', background=[('selected', '#cce5ff')])
 
         cols = ["#","Due Date","Expected","Received","Receipt No","Overdays","Rcd Overdues","Balance","Remarks"]
-        tree2 = ttk.Treeview(dlg2, columns=cols, show='headings')
-        for c in cols:
-            tree2.heading(c, text=c)
-            tree2.column(c, width=100, anchor='center')
+        tree2 = ttk.Treeview(dlg2, columns=cols, show='headings', style="Installment.Treeview")
+        tree2.heading("#", text="#")
+        tree2.column("#", width=50, anchor='center')
+        tree2.heading("Due Date", text="Due Date")
+        tree2.column("Due Date", width=120, anchor='center')
+        tree2.heading("Expected", text="Expected")
+        tree2.column("Expected", width=100, anchor='center')
+        tree2.heading("Received", text="Received")
+        tree2.column("Received", width=100, anchor='center')
+        tree2.heading("Receipt No", text="Receipt No")
+        tree2.column("Receipt No", width=150, anchor='center')
+        tree2.heading("Overdays", text="Overdays")
+        tree2.column("Overdays", width=80, anchor='center')
+        tree2.heading("Rcd Overdues", text="Rcd Overdues")
+        tree2.column("Rcd Overdues", width=100, anchor='center')
+        tree2.heading("Balance", text="Balance")
+        tree2.column("Balance", width=100, anchor='center')
+        tree2.heading("Remarks", text="Remarks")
+        tree2.column("Remarks", width=200, anchor='w')
         tree2.pack(fill=tk.BOTH, expand=True)
 
         # Insert rows
@@ -1476,14 +1107,18 @@ class MainWindow:
         name_entry = tk.Entry(filter_frame)
         name_entry.grid(row=0, column=1, padx=5, pady=5)
 
-        tk.Label(filter_frame, text="Village:", bg="white").grid(row=0, column=2, padx=5, pady=5, sticky="e")
+        tk.Label(filter_frame, text="Phone:", bg="white").grid(row=0, column=2, padx=5, pady=5, sticky="e")
+        phone_entry = tk.Entry(filter_frame)
+        phone_entry.grid(row=0, column=3, padx=5, pady=5)
+
+        tk.Label(filter_frame, text="Village:", bg="white").grid(row=0, column=4, padx=5, pady=5, sticky="e")
         # make combobox editable so typing filters suggestions
         village_cb = ttk.Combobox(filter_frame, width=30, state="normal")
-        village_cb.grid(row=0, column=3, padx=5, pady=5)
+        village_cb.grid(row=0, column=5, padx=5, pady=5)
 
-        tk.Label(filter_frame, text="Address:", bg="white").grid(row=0, column=4, padx=5, pady=5, sticky="e")
+        tk.Label(filter_frame, text="Address:", bg="white").grid(row=0, column=6, padx=5, pady=5, sticky="e")
         address_cb = ttk.Combobox(filter_frame, width=40, state="normal")
-        address_cb.grid(row=0, column=5, padx=5, pady=5)
+        address_cb.grid(row=0, column=7, padx=5, pady=5)
 
         # store full lists so we can filter locally
         village_full = []
@@ -1613,6 +1248,7 @@ class MainWindow:
 
             filters = {
                 "name": name_entry.get().strip() or None,
+                "phone": phone_entry.get().strip() or None,
                 "village": village_filter,
                 "address": address_filter,
                 "item": item_entry.get().strip() or None,

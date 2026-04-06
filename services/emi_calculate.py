@@ -39,8 +39,11 @@ def calculate_emi(
 
 def generate_due_dates(start_date, total_installments, installment_mode):
     """
-    installment_mode: MONTHLY / WEEKLY / DAILY
+    installment_mode: MONTHLY / WEEKLY / DAILY / ONE-TIME
     """
+    if installment_mode == "ONE-TIME":
+        return [start_date]
+    
     due_dates = []
     current_date = start_date
 

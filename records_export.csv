@@ -1,11 +1,84 @@
 customer_id,name,address,village,brand
-9,test,birdpuad,bhullarai,dfj
-8,UI Item Test User,,,TestBrand
-7,TestUser,,,
-6,abc,bhullarai,,samsung
-5,test,bh,,hbh
-4,test,dhushda,,sd jna
-3,test,asd,,dsndjbas
-3,test,asd,,dsndjbas
-2,test2-,sjbdayu,,samsung
-1,test_1,test,,
+54,UI Item Test User,,,TestBrand
+53,UI Test User,,,
+52,UI Item Test User,,,TestBrand
+51,test,pandwa,pandwa-mohlla-1,khnfedh
+50,Pooja Nair,birdpuad,bhullarai,Haier
+49,Aakash Patel,bhullarai,bhullarai,Panasonic
+49,Aakash Patel,bhullarai,bhullarai,LG
+48,Sonia Sharma,birdpuad,bhullarai,Haier
+48,Sonia Sharma,birdpuad,bhullarai,Panasonic
+47,Neha Chaudhary,birdpuad,bhullarai,Haier
+46,Anjali Chaudhary,bhullarai,bhullarai,Whirlpool
+46,Anjali Chaudhary,bhullarai,bhullarai,Haier
+45,Sameer Nair,bhullarai,bhullarai,Whirlpool
+44,Aakash Gupta,bhullarai,bhullarai,Sony
+44,Aakash Gupta,bhullarai,bhullarai,LG
+44,Aakash Gupta,bhullarai,bhullarai,Sony
+44,Aakash Gupta,bhullarai,bhullarai,LG
+43,Suresh Joshi,bhullarai,bhullarai,Haier
+42,Pooja Joshi,bhullarai,bhullarai,Whirlpool
+41,Anjali Verma,bhullarai,bhullarai,Samsung
+40,Sonia Verma,birdpuad,bhullarai,Panasonic
+39,Suresh Sharma,birdpuad,bhullarai,Sony
+38,Pooja Chaudhary,bhullarai,bhullarai,Sony
+38,Pooja Chaudhary,bhullarai,bhullarai,Panasonic
+37,Meera Joshi,birdpuad,bhullarai,Samsung
+37,Meera Joshi,birdpuad,bhullarai,Haier
+36,Vijay Verma,bhullarai,bhullarai,Whirlpool
+35,Aakash Singh,bhullarai,bhullarai,Samsung
+34,Raj Chaudhary,birdpuad,bhullarai,Sony
+33,Rahul Patel,birdpuad,bhullarai,Haier
+33,Rahul Patel,birdpuad,bhullarai,Sony
+33,Rahul Patel,birdpuad,bhullarai,Haier
+33,Rahul Patel,birdpuad,bhullarai,Sony
+32,Anjali Singh,birdpuad,bhullarai,Sony
+31,Rahul Gupta,birdpuad,bhullarai,Samsung
+30,Rahul Joshi,birdpuad,bhullarai,LG
+30,Rahul Joshi,birdpuad,bhullarai,Samsung
+30,Rahul Joshi,birdpuad,bhullarai,LG
+30,Rahul Joshi,birdpuad,bhullarai,Samsung
+29,Aakash Kumar,bhullarai,bhullarai,Sony
+28,Rahul Gupta,birdpuad,bhullarai,Haier
+27,Sonia Nair,birdpuad,bhullarai,Samsung
+26,Meera Joshi,bhullarai,bhullarai,Samsung
+25,Pooja Joshi,bhullarai,bhullarai,Sony
+24,Sunil Sharma,birdpuad,bhullarai,Samsung
+23,Priya Chaudhary,birdpuad,bhullarai,LG
+22,Raj Patel,birdpuad,bhullarai,Haier
+21,Raju Nair,birdpuad,bhullarai,Panasonic
+21,Raju Nair,birdpuad,bhullarai,Sony
+20,Sameer Chaudhary,bhullarai,bhullarai,Samsung
+19,Suresh Kumar,birdpuad,bhullarai,Whirlpool
+19,Suresh Kumar,birdpuad,bhullarai,Whirlpool
+18,Sita Gupta,bhullarai,bhullarai,LG
+18,Sita Gupta,bhullarai,bhullarai,Panasonic
+18,Sita Gupta,bhullarai,bhullarai,LG
+18,Sita Gupta,bhullarai,bhullarai,Panasonic
+17,Vijay Kumar,birdpuad,bhullarai,Whirlpool
+16,Meera Chaudhary,birdpuad,bhullarai,Whirlpool
+15,Kavita Kumar,bhullarai,bhullarai,Samsung
+15,Kavita Kumar,bhullarai,bhullarai,Samsung
+15,Kavita Kumar,bhullarai,bhullarai,Samsung
+15,Kavita Kumar,bhullarai,bhullarai,Samsung
+14,Rahul Joshi,birdpuad,bhullarai,Haier
+13,Raj Nair,bhullarai,bhullarai,Samsung
+12,Suresh Gupta,birdpuad,bhullarai,LG
+11,Pooja Chaudhary,birdpuad,bhullarai,Haier
+11,Pooja Chaudhary,birdpuad,bhullarai,LG
+10,Meera Sharma,birdpuad,bhullarai,Haier
+10,Meera Sharma,birdpuad,bhullarai,Sony
+9,Meera Singh,bhullarai,bhullarai,LG
+8,Suresh Reddy,bhullarai,bhullarai,Samsung
+8,Suresh Reddy,bhullarai,bhullarai,Sony
+7,Deepa Nair,birdpuad,bhullarai,Whirlpool
+6,Kavita Chaudhary,birdpuad,bhullarai,LG
+5,Neha Singh,bhullarai,bhullarai,Panasonic
+4,Meera Patel,bhullarai,bhullarai,Whirlpool
+3,Rahul Reddy,birdpuad,bhullarai,Sony
+3,Rahul Reddy,birdpuad,bhullarai,Haier
+3,Rahul Reddy,birdpuad,bhullarai,Sony
+3,Rahul Reddy,birdpuad,bhullarai,Haier
+2,Meera Singh,bhullarai,bhullarai,Haier
+1,Neha Sharma,bhullarai,bhullarai,Sony
+1,Neha Sharma,bhullarai,bhullarai,LG

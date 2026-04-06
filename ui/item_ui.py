@@ -71,12 +71,13 @@ class ItemUI:
         self.entries["Mode"].destroy()
         self.mode_cb = ttk.Combobox(
             form,
-            values=["MONTHLY", "WEEKLY", "DAILY"],
+            values=["MONTHLY", "WEEKLY", "DAILY", "ONE-TIME"],
             state="readonly",
             width=27
         )
         self.mode_cb.grid(row=7, column=1, padx=5, pady=2)
         self.mode_cb.set("MONTHLY")
+        self.mode_cb.bind("<<ComboboxSelected>>", self.on_mode_change)
 
         # -------- Buttons --------
         btn_frame = tk.Frame(form, bg="#f5f7fa")
@@ -126,6 +127,14 @@ class ItemUI:
         self.customer_cb["values"] = [
             f'{c["customer_id"]} - {c["name"]}' for c in self.customers
         ]
+
+    def on_mode_change(self, event=None):
+        if self.mode_cb.get() == "ONE-TIME":
+            self.entries["Installments"].delete(0, tk.END)
+            self.entries["Installments"].insert(0, "1")
+            self.entries["Installments"].config(state="disabled")
+        else:
+            self.entries["Installments"].config(state="normal")
 
     # ================= EMI CALCULATION =================
     def calculate(self):

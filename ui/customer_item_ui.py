@@ -117,9 +117,10 @@ class CustomerItemUI:
         for text in labels:
             tk.Label(form, text=text+":").grid(row=row, column=0, sticky="e")
             if text == "Mode":
-                self.mode_cb = ttk.Combobox(form, values=["MONTHLY", "WEEKLY", "DAILY"], state="readonly", width=37)
+                self.mode_cb = ttk.Combobox(form, values=["MONTHLY", "WEEKLY", "DAILY", "ONE-TIME"], state="readonly", width=37)
                 self.mode_cb.grid(row=row, column=1, pady=2)
                 self.mode_cb.set("MONTHLY")
+                self.mode_cb.bind("<<ComboboxSelected>>", self.on_mode_change)
             else:
                 entry = tk.Entry(form, width=40)
                 entry.grid(row=row, column=1, pady=2)
@@ -186,6 +187,14 @@ class CustomerItemUI:
         villages = get_all_villages()
         self.village_full[:] = [f"{v['village_id']} - {v['name']}" for v in villages]
         self.village_cb["values"] = self.village_full
+
+    def on_mode_change(self, event=None):
+        if self.mode_cb.get() == "ONE-TIME":
+            self.entries["Installments"].delete(0, tk.END)
+            self.entries["Installments"].insert(0, "1")
+            self.entries["Installments"].config(state="disabled")
+        else:
+            self.entries["Installments"].config(state="normal")
 
     # ================= EMI CALCULATION =================
     def calculate_emi(self):

@@ -181,6 +181,7 @@ imports:
  &#8226;   <a href="#traceback">traceback</a>
  &#8226;   <a href="#types">types</a>
  &#8226;   <a href="#ui">ui</a>
+ &#8226;   <a href="#ui.login_ui">ui.login_ui</a>
  &#8226;   <a href="#ui.main_window">ui.main_window</a>
  &#8226;   <a href="#warnings">warnings</a>
  &#8226;   <a href="#weakref">weakref</a>
@@ -3038,6 +3039,7 @@ imports:
 imported by:
     <a href="#importlib.metadata">importlib.metadata</a>
  &#8226;   <a href="#importlib_metadata">importlib_metadata</a>
+ &#8226;   <a href="#ui.main_window">ui.main_window</a>
 
   </div>
 
@@ -3108,8 +3110,13 @@ imports:
   </div>
   <div class="import">
 imported by:
-    <a href="#models.coustmer_model">models.coustmer_model</a>
+    <a href="#models.address_model">models.address_model</a>
+ &#8226;   <a href="#models.customer_model">models.customer_model</a>
+ &#8226;   <a href="#models.guarantor_model">models.guarantor_model</a>
  &#8226;   <a href="#models.item_model">models.item_model</a>
+ &#8226;   <a href="#models.payment_model">models.payment_model</a>
+ &#8226;   <a href="#models.report_model">models.report_model</a>
+ &#8226;   <a href="#models.village_model">models.village_model</a>
 
   </div>
 
@@ -3173,7 +3180,8 @@ imported by:
  &#8226;   <a href="#opentelemetry.sdk.util">opentelemetry.sdk.util</a>
  &#8226;   <a href="#psutil">psutil</a>
  &#8226;   <a href="#services.emi_calculate">services.emi_calculate</a>
- &#8226;   <a href="#ui.item_ui">ui.item_ui</a>
+ &#8226;   <a href="#ui.customer_item_ui">ui.customer_item_ui</a>
+ &#8226;   <a href="#ui.main_window">ui.main_window</a>
  &#8226;   <a href="#xmlrpc.client">xmlrpc.client</a>
 
   </div>
@@ -3267,6 +3275,7 @@ imports:
   <div class="import">
 imported by:
     <a href="#fractions">fractions</a>
+ &#8226;   <a href="#models.payment_model">models.payment_model</a>
  &#8226;   <a href="#mysql.connector.abstracts">mysql.connector.abstracts</a>
  &#8226;   <a href="#mysql.connector.connection">mysql.connector.connection</a>
  &#8226;   <a href="#mysql.connector.constants">mysql.connector.constants</a>
@@ -3276,6 +3285,7 @@ imported by:
  &#8226;   <a href="#mysql.connector.types">mysql.connector.types</a>
  &#8226;   <a href="#mysql.connector.utils">mysql.connector.utils</a>
  &#8226;   <a href="#statistics">statistics</a>
+ &#8226;   <a href="#ui.main_window">ui.main_window</a>
  &#8226;   <a href="#xmlrpc.client">xmlrpc.client</a>
 
   </div>
@@ -8124,16 +8134,21 @@ imported by:
 <span class="moduletype">Package</span>  <div class="import">
 imported by:
     <a href="#main.py">main.py</a>
- &#8226;   <a href="#models.coustmer_model">models.coustmer_model</a>
+ &#8226;   <a href="#models.address_model">models.address_model</a>
+ &#8226;   <a href="#models.customer_model">models.customer_model</a>
+ &#8226;   <a href="#models.guarantor_model">models.guarantor_model</a>
  &#8226;   <a href="#models.item_model">models.item_model</a>
+ &#8226;   <a href="#models.payment_model">models.payment_model</a>
+ &#8226;   <a href="#models.report_model">models.report_model</a>
+ &#8226;   <a href="#models.village_model">models.village_model</a>
 
   </div>
 
 </div>
 
 <div class="node">
-  <a name="models.coustmer_model"></a>
-  <a target="code" href="///C:/sandhu-enterprises/models/coustmer_model.py" type="text/plain"><tt>models.coustmer_model</tt></a>
+  <a name="models.address_model"></a>
+  <a target="code" href="///C:/sandhu-enterprises/models/address_model.py" type="text/plain"><tt>models.address_model</tt></a>
 <span class="moduletype">SourceModule</span>  <div class="import">
 imports:
     <a href="#database.db_connection">database.db_connection</a>
@@ -8142,7 +8157,43 @@ imports:
   </div>
   <div class="import">
 imported by:
-    <a href="#ui.item_ui">ui.item_ui</a>
+    <a href="#ui.customer_item_ui">ui.customer_item_ui</a>
+ &#8226;   <a href="#ui.main_window">ui.main_window</a>
+
+  </div>
+
+</div>
+
+<div class="node">
+  <a name="models.customer_model"></a>
+  <a target="code" href="///C:/sandhu-enterprises/models/customer_model.py" type="text/plain"><tt>models.customer_model</tt></a>
+<span class="moduletype">SourceModule</span>  <div class="import">
+imports:
+    <a href="#database.db_connection">database.db_connection</a>
+ &#8226;   <a href="#models">models</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#ui.customer_item_ui">ui.customer_item_ui</a>
+ &#8226;   <a href="#ui.main_window">ui.main_window</a>
+
+  </div>
+
+</div>
+
+<div class="node">
+  <a name="models.guarantor_model"></a>
+  <a target="code" href="///C:/sandhu-enterprises/models/guarantor_model.py" type="text/plain"><tt>models.guarantor_model</tt></a>
+<span class="moduletype">SourceModule</span>  <div class="import">
+imports:
+    <a href="#database.db_connection">database.db_connection</a>
+ &#8226;   <a href="#models">models</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#ui.customer_item_ui">ui.customer_item_ui</a>
 
   </div>
 
@@ -8159,7 +8210,63 @@ imports:
   </div>
   <div class="import">
 imported by:
-    <a href="#ui.item_ui">ui.item_ui</a>
+    <a href="#models.payment_model">models.payment_model</a>
+ &#8226;   <a href="#ui.customer_item_ui">ui.customer_item_ui</a>
+ &#8226;   <a href="#ui.main_window">ui.main_window</a>
+
+  </div>
+
+</div>
+
+<div class="node">
+  <a name="models.payment_model"></a>
+  <a target="code" href="///C:/sandhu-enterprises/models/payment_model.py" type="text/plain"><tt>models.payment_model</tt></a>
+<span class="moduletype">SourceModule</span>  <div class="import">
+imports:
+    <a href="#database.db_connection">database.db_connection</a>
+ &#8226;   <a href="#decimal">decimal</a>
+ &#8226;   <a href="#models">models</a>
+ &#8226;   <a href="#models.item_model">models.item_model</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#ui.main_window">ui.main_window</a>
+
+  </div>
+
+</div>
+
+<div class="node">
+  <a name="models.report_model"></a>
+  <a target="code" href="///C:/sandhu-enterprises/models/report_model.py" type="text/plain"><tt>models.report_model</tt></a>
+<span class="moduletype">SourceModule</span>  <div class="import">
+imports:
+    <a href="#database.db_connection">database.db_connection</a>
+ &#8226;   <a href="#models">models</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#ui.main_window">ui.main_window</a>
+
+  </div>
+
+</div>
+
+<div class="node">
+  <a name="models.village_model"></a>
+  <a target="code" href="///C:/sandhu-enterprises/models/village_model.py" type="text/plain"><tt>models.village_model</tt></a>
+<span class="moduletype">SourceModule</span>  <div class="import">
+imports:
+    <a href="#database.db_connection">database.db_connection</a>
+ &#8226;   <a href="#models">models</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#ui.customer_item_ui">ui.customer_item_ui</a>
+ &#8226;   <a href="#ui.main_window">ui.main_window</a>
 
   </div>
 
@@ -12932,7 +13039,8 @@ imports:
   </div>
   <div class="import">
 imported by:
-    <a href="#ui.item_ui">ui.item_ui</a>
+    <a href="#ui.customer_item_ui">ui.customer_item_ui</a>
+ &#8226;   <a href="#ui.main_window">ui.main_window</a>
 
   </div>
 
@@ -13727,6 +13835,7 @@ imports:
  &#8226;   <a href="#sys">sys</a>
  &#8226;   <a href="#tkinter.constants">tkinter.constants</a>
  &#8226;   <a href="#tkinter.messagebox">tkinter.messagebox</a>
+ &#8226;   <a href="#tkinter.simpledialog">tkinter.simpledialog</a>
  &#8226;   <a href="#tkinter.ttk">tkinter.ttk</a>
  &#8226;   <a href="#traceback">traceback</a>
  &#8226;   <a href="#types">types</a>
@@ -13738,8 +13847,10 @@ imported by:
  &#8226;   <a href="#tkinter.commondialog">tkinter.commondialog</a>
  &#8226;   <a href="#tkinter.constants">tkinter.constants</a>
  &#8226;   <a href="#tkinter.messagebox">tkinter.messagebox</a>
+ &#8226;   <a href="#tkinter.simpledialog">tkinter.simpledialog</a>
  &#8226;   <a href="#tkinter.ttk">tkinter.ttk</a>
- &#8226;   <a href="#ui.item_ui">ui.item_ui</a>
+ &#8226;   <a href="#ui.customer_item_ui">ui.customer_item_ui</a>
+ &#8226;   <a href="#ui.login_ui">ui.login_ui</a>
  &#8226;   <a href="#ui.main_window">ui.main_window</a>
 
   </div>
@@ -13790,7 +13901,28 @@ imports:
   <div class="import">
 imported by:
     <a href="#tkinter">tkinter</a>
- &#8226;   <a href="#ui.item_ui">ui.item_ui</a>
+ &#8226;   <a href="#tkinter.simpledialog">tkinter.simpledialog</a>
+ &#8226;   <a href="#ui.customer_item_ui">ui.customer_item_ui</a>
+ &#8226;   <a href="#ui.login_ui">ui.login_ui</a>
+ &#8226;   <a href="#ui.main_window">ui.main_window</a>
+
+  </div>
+
+</div>
+
+<div class="node">
+  <a name="tkinter.simpledialog"></a>
+  <a target="code" href="///C:/Python312/Lib/tkinter/simpledialog.py" type="text/plain"><tt>tkinter.simpledialog</tt></a>
+<span class="moduletype">SourceModule</span>  <div class="import">
+imports:
+    <a href="#tkinter">tkinter</a>
+ &#8226;   <a href="#tkinter.messagebox">tkinter.messagebox</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#tkinter">tkinter</a>
+ &#8226;   <a href="#ui.main_window">ui.main_window</a>
 
   </div>
 
@@ -13807,7 +13939,7 @@ imports:
   <div class="import">
 imported by:
     <a href="#tkinter">tkinter</a>
- &#8226;   <a href="#ui.item_ui">ui.item_ui</a>
+ &#8226;   <a href="#ui.customer_item_ui">ui.customer_item_ui</a>
  &#8226;   <a href="#ui.main_window">ui.main_window</a>
 
   </div>
@@ -14146,7 +14278,8 @@ imported by:
 <span class="moduletype">Package</span>  <div class="import">
 imported by:
     <a href="#main.py">main.py</a>
- &#8226;   <a href="#ui.item_ui">ui.item_ui</a>
+ &#8226;   <a href="#ui.customer_item_ui">ui.customer_item_ui</a>
+ &#8226;   <a href="#ui.login_ui">ui.login_ui</a>
  &#8226;   <a href="#ui.main_window">ui.main_window</a>
 
   </div>
@@ -14154,13 +14287,16 @@ imported by:
 </div>
 
 <div class="node">
-  <a name="ui.item_ui"></a>
-  <a target="code" href="///C:/sandhu-enterprises/ui/item_ui.py" type="text/plain"><tt>ui.item_ui</tt></a>
+  <a name="ui.customer_item_ui"></a>
+  <a target="code" href="///C:/sandhu-enterprises/ui/customer_item_ui.py" type="text/plain"><tt>ui.customer_item_ui</tt></a>
 <span class="moduletype">SourceModule</span>  <div class="import">
 imports:
     <a href="#datetime">datetime</a>
- &#8226;   <a href="#models.coustmer_model">models.coustmer_model</a>
+ &#8226;   <a href="#models.address_model">models.address_model</a>
+ &#8226;   <a href="#models.customer_model">models.customer_model</a>
+ &#8226;   <a href="#models.guarantor_model">models.guarantor_model</a>
  &#8226;   <a href="#models.item_model">models.item_model</a>
+ &#8226;   <a href="#models.village_model">models.village_model</a>
  &#8226;   <a href="#services.emi_calculate">services.emi_calculate</a>
  &#8226;   <a href="#tkinter">tkinter</a>
  &#8226;   <a href="#tkinter.messagebox">tkinter.messagebox</a>
@@ -14177,14 +14313,46 @@ imported by:
 </div>
 
 <div class="node">
+  <a name="ui.login_ui"></a>
+  <a target="code" href="///C:/sandhu-enterprises/ui/login_ui.py" type="text/plain"><tt>ui.login_ui</tt></a>
+<span class="moduletype">SourceModule</span>  <div class="import">
+imports:
+    <a href="#tkinter">tkinter</a>
+ &#8226;   <a href="#tkinter.messagebox">tkinter.messagebox</a>
+ &#8226;   <a href="#ui">ui</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#main.py">main.py</a>
+ &#8226;   <a href="#ui.main_window">ui.main_window</a>
+
+  </div>
+
+</div>
+
+<div class="node">
   <a name="ui.main_window"></a>
   <a target="code" href="///C:/sandhu-enterprises/ui/main_window.py" type="text/plain"><tt>ui.main_window</tt></a>
 <span class="moduletype">SourceModule</span>  <div class="import">
 imports:
-    <a href="#tkinter">tkinter</a>
+    <a href="#csv">csv</a>
+ &#8226;   <a href="#datetime">datetime</a>
+ &#8226;   <a href="#decimal">decimal</a>
+ &#8226;   <a href="#models.address_model">models.address_model</a>
+ &#8226;   <a href="#models.customer_model">models.customer_model</a>
+ &#8226;   <a href="#models.item_model">models.item_model</a>
+ &#8226;   <a href="#models.payment_model">models.payment_model</a>
+ &#8226;   <a href="#models.report_model">models.report_model</a>
+ &#8226;   <a href="#models.village_model">models.village_model</a>
+ &#8226;   <a href="#services.emi_calculate">services.emi_calculate</a>
+ &#8226;   <a href="#tkinter">tkinter</a>
+ &#8226;   <a href="#tkinter.messagebox">tkinter.messagebox</a>
+ &#8226;   <a href="#tkinter.simpledialog">tkinter.simpledialog</a>
  &#8226;   <a href="#tkinter.ttk">tkinter.ttk</a>
  &#8226;   <a href="#ui">ui</a>
- &#8226;   <a href="#ui.item_ui">ui.item_ui</a>
+ &#8226;   <a href="#ui.customer_item_ui">ui.customer_item_ui</a>
+ &#8226;   <a href="#ui.login_ui">ui.login_ui</a>
 
   </div>
   <div class="import">
