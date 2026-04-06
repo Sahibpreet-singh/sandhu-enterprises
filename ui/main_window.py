@@ -1025,6 +1025,10 @@ class MainWindow:
             r_ids = [str(r['payment_id']) for r in inst['receipts'] if r['payment_id']]
             inst['receipt_no'] = ','.join(r_ids)
 
+            # received dates - collect all payment dates
+            recv_dates = [r['payment_date'].strftime('%d-%m-%Y') if hasattr(r['payment_date'], 'strftime') else str(r['payment_date']) for r in inst['receipts'] if r['payment_date']]
+            inst['received_dates'] = ', '.join(recv_dates) if recv_dates else ''
+
             # overdues received (payments that occurred after due date)
             overdue_received = sum(r['amount'] for r in inst['receipts'] if r['payment_date'] and r['payment_date'] > inst['due_date'])
             inst['overdue_received'] = round(overdue_received, 2)
@@ -1064,47 +1068,96 @@ class MainWindow:
         dlg2.title(f"Installment Details for Item {item_id}")
         dlg2.geometry('1200x700')
 
-        # Style for installment table
-        style = ttk.Style()
-        style.configure("Installment.Treeview", font=("Segoe UI", 12, "bold"), rowheight=30, background="#ffffff", fieldbackground="#ffffff")
-        style.configure("Installment.Treeview.Heading", font=("Segoe UI", 12, "bold"), background="#eef3fb")
-        style.map('Installment.Treeview', background=[('selected', '#cce5ff')])
+        # Create scrollable canvas for the grid
+        canvas = tk.Canvas(dlg2, bg="#ffffff")
+        scrollbar_y = ttk.Scrollbar(dlg2, orient="vertical", command=canvas.yview)
+        scrollbar_x = ttk.Scrollbar(dlg2, orient="horizontal", command=canvas.xview)
+        
+        scrollable_frame = tk.Frame(canvas, bg="#ffffff")
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
 
-        cols = ["#","Due Date","Expected","Received","Receipt No","Overdays","Rcd Overdues","Balance","Remarks"]
-        tree2 = ttk.Treeview(dlg2, columns=cols, show='headings', style="Installment.Treeview")
-        tree2.heading("#", text="#")
-        tree2.column("#", width=50, anchor='center')
-        tree2.heading("Due Date", text="Due Date")
-        tree2.column("Due Date", width=120, anchor='center')
-        tree2.heading("Expected", text="Expected")
-        tree2.column("Expected", width=100, anchor='center')
-        tree2.heading("Received", text="Received")
-        tree2.column("Received", width=100, anchor='center')
-        tree2.heading("Receipt No", text="Receipt No")
-        tree2.column("Receipt No", width=150, anchor='center')
-        tree2.heading("Overdays", text="Overdays")
-        tree2.column("Overdays", width=80, anchor='center')
-        tree2.heading("Rcd Overdues", text="Rcd Overdues")
-        tree2.column("Rcd Overdues", width=100, anchor='center')
-        tree2.heading("Balance", text="Balance")
-        tree2.column("Balance", width=100, anchor='center')
-        tree2.heading("Remarks", text="Remarks")
-        tree2.column("Remarks", width=200, anchor='w')
-        tree2.pack(fill=tk.BOTH, expand=True)
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
 
-        # Insert rows
-        for inst in installments:
-            tree2.insert('', 'end', values=[
-                inst['no'],
-                inst['due_date'].isoformat() if hasattr(inst['due_date'], 'isoformat') else str(inst['due_date']),
-                f"{inst['expected']:.2f}",
-                f"{inst['received']:.2f}",
-                inst.get('receipt_no', ''),
-                inst.get('overdays', 0),
-                f"{inst.get('overdue_received', 0):.2f}",
-                f"{inst.get('balance', 0):.2f}",
-                inst.get('remarks', '')
-            ])
+        # Pack scrollbars and canvas
+        scrollbar_y.pack(side="right", fill="y")
+        scrollbar_x.pack(side="bottom", fill="x")
+        canvas.pack(side="left", fill="both", expand=True)
+
+        # Column headers
+        columns = ["Sr No", "Installment Date", "Recv Date", "Receipt No", "Balance", "Remarks"]
+        column_widths = [60, 120, 120, 150, 100, 200]
+        
+        # Create header row
+        for col_idx, col_name in enumerate(columns):
+            header_label = tk.Label(
+                scrollable_frame, 
+                text=col_name, 
+                font=("Segoe UI", 10, "bold"),
+                bg="#e1f5fe",
+                fg="#000000",
+                borderwidth=1,
+                relief="solid",
+                padx=5,
+                pady=5,
+                width=column_widths[col_idx]//8 if col_idx < len(column_widths) else 10
+            )
+            header_label.grid(row=0, column=col_idx, sticky="nsew", padx=0, pady=0)
+
+        # Function to create grid cell
+        def create_grid_cell(parent, text, row, col, bg_color="#ffffff", fg_color="#000000"):
+            cell_label = tk.Label(
+                parent,
+                text=text,
+                font=("Segoe UI", 9),
+                bg=bg_color,
+                fg=fg_color,
+                borderwidth=1,
+                relief="solid",
+                padx=3,
+                pady=3,
+                anchor="w",
+                width=column_widths[col]//8 if col < len(column_widths) else 10
+            )
+            cell_label.grid(row=row, column=col, sticky="nsew", padx=0, pady=0)
+            return cell_label
+
+        # Populate grid with installment data
+        for row_idx, inst in enumerate(installments):
+            grid_row = row_idx + 1  # +1 because row 0 is header
+            
+            # Determine row colors based on payment status
+            if inst['received'] >= inst['expected']:
+                bg_color = '#d4edda'  # Green for paid
+                fg_color = '#155724'
+            elif inst['received'] > 0:
+                bg_color = '#fff3cd'  # Yellow for partial
+                fg_color = '#856404'
+            else:
+                bg_color = '#f8d7da'  # Red for unpaid
+                fg_color = '#721c24'
+
+            # Create cells for this row
+            values = [
+                inst['no'],  # Sr No
+                inst['due_date'].strftime('%d-%m-%Y') if hasattr(inst['due_date'], 'strftime') else str(inst['due_date']),  # Installment Date
+                inst.get('received_dates', ''),  # Recv Date
+                inst.get('receipt_no', ''),  # Receipt No
+                f"₹{inst.get('balance', 0):.0f}",  # Balance
+                inst.get('remarks', '')  # Remarks
+            ]
+
+            for col_idx, value in enumerate(values):
+                cell_label = create_grid_cell(scrollable_frame, str(value), grid_row, col_idx, bg_color, fg_color)
+                # Make cells clickable for potential future functionality
+                cell_label.bind("<Double-1>", lambda e: None)
+
+        # Make columns expandable
+        for col_idx in range(len(columns)):
+            scrollable_frame.grid_columnconfigure(col_idx, weight=1)
 
         # Close on escape
         dlg2.bind('<Escape>', lambda e: dlg2.destroy())
@@ -1448,6 +1501,26 @@ class MainWindow:
             font=("Arial", 10, "bold"),
             command=lambda: self.open_record_payment()
         ).grid(row=0, column=10, padx=10)
+
+        # ========== Summary Statistics ==========
+        summary_frame = tk.Frame(self.content_frame, bg="#f8f9fa", relief="groove", bd=2)
+        summary_frame.pack(fill=tk.X, padx=10, pady=5)
+
+        self.summary_labels = {}
+        summary_items = [
+            ("Total Records", "0"),
+            ("Total Amount", "₹0"),
+            ("Total Paid", "₹0"),
+            ("Total Due", "₹0"),
+            ("Paid Records", "0"),
+            ("Unpaid Records", "0")
+        ]
+
+        for i, (label_text, default_value) in enumerate(summary_items):
+            tk.Label(summary_frame, text=f"{label_text}:", bg="#f8f9fa", font=("Arial", 10, "bold")).grid(row=0, column=i*2, padx=10, pady=5, sticky="e")
+            label = tk.Label(summary_frame, text=default_value, bg="#f8f9fa", font=("Arial", 10), fg="#2c3e50")
+            label.grid(row=0, column=i*2+1, padx=10, pady=5, sticky="w")
+            self.summary_labels[label_text] = label
 
         # Initial load
         search_records()
