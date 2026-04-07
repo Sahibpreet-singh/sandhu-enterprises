@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
 
-SUPERADMIN_PASSWORD = "Sandhu"  # you can load this from DB later
+SUPERADMIN_PASSWORD = "9246"  # you can load this from DB later
 
 class LoginWindow:
     def __init__(self, root, on_login_success):
