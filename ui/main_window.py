@@ -681,18 +681,24 @@ class MainWindow:
         tk.Label(header, text=str(data.get("customer_name") or ""), font=("Segoe UI", 14, "bold"), bg="#f5f7fa").pack(anchor="w", padx=12, pady=(8, 0))
         tk.Label(header, text=f"ID: {data.get('customer_id') or ''}    •    Entry Date: {data.get('entry_date') or ''}", font=("Segoe UI", 9), bg="#f5f7fa").pack(anchor="w", padx=12, pady=(0, 8))
 
-        # Scrollable area
+        # Scrollable area with vertical and horizontal support
         container = tk.Frame(dlg)
         container.pack(fill=tk.BOTH, expand=True)
 
         canvas = tk.Canvas(container, borderwidth=0, highlightthickness=0, bg="#ffffff")
         vsb = ttk.Scrollbar(container, orient="vertical", command=canvas.yview)
+        hsb = ttk.Scrollbar(container, orient="horizontal", command=canvas.xview)
         vsb.pack(side=tk.RIGHT, fill=tk.Y)
+        hsb.pack(side=tk.BOTTOM, fill=tk.X)
         canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        canvas.configure(yscrollcommand=vsb.set)
+        canvas.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
 
         inner = tk.Frame(canvas, bg="#ffffff")
-        canvas.create_window((0, 0), window=inner, anchor="nw")
+        canvas_window = canvas.create_window((0, 0), window=inner, anchor="nw")
+
+        def _on_canvas_config(event):
+            canvas.itemconfig(canvas_window, width=max(event.width, inner.winfo_reqwidth()))
+        canvas.bind('<Configure>', _on_canvas_config)
 
         def _on_frame_config(e):
             canvas.configure(scrollregion=canvas.bbox("all"))

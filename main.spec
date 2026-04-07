@@ -5,7 +5,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('assets/app_icon.png', 'assets')],
+    datas=[('assets/app_icon.png', 'assets'), ('config.json', '.')],
     hiddenimports=['mysql.connector', 'models', 'database', 'ui'],
     hookspath=[],
     hooksconfig={},
