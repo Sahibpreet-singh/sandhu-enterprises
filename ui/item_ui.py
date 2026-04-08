@@ -177,24 +177,105 @@ class ItemUI:
             messagebox.showerror("Error", "Select customer")
             return
 
+        # Validate item fields before saving
+        brand = self.entries["Brand"].get().strip()
+        model = self.entries["Model"].get().strip()
+        item_amount_str = self.entries["Item Amount"].get().strip()
+        advance_str = self.entries["Advance"].get().strip()
+        interest_str = self.entries["Interest"].get().strip()
+        installments_str = self.entries["Installments"].get().strip()
+        interest_type = self.interest_type_cb.get().upper()
+
+        # Check required fields
+        if not brand:
+            messagebox.showerror("Validation Error", "Brand is required")
+            return
+        if not model:
+            messagebox.showerror("Validation Error", "Model is required")
+            return
+        if not item_amount_str:
+            messagebox.showerror("Validation Error", "Item Amount is required")
+            return
+        if not advance_str:
+            messagebox.showerror("Validation Error", "Advance Amount is required")
+            return
+        if not interest_str:
+            messagebox.showerror("Validation Error", "Interest Rate is required")
+            return
+        if not installments_str:
+            messagebox.showerror("Validation Error", "Number of Installments is required")
+            return
+
+        # Validate numeric fields
+        try:
+            item_amount = float(item_amount_str)
+        except ValueError:
+            messagebox.showerror("Validation Error", "Item Amount must be a valid number")
+            return
+
+        try:
+            advance_amount = float(advance_str)
+        except ValueError:
+            messagebox.showerror("Validation Error", "Advance Amount must be a valid number")
+            return
+
+        try:
+            interest_rate = float(interest_str)
+        except ValueError:
+            messagebox.showerror("Validation Error", "Interest Rate must be a valid number")
+            return
+
+        try:
+            total_installments = int(installments_str)
+        except ValueError:
+            messagebox.showerror("Validation Error", "Number of Installments must be a valid whole number")
+            return
+
+        # Validate ranges and logic
+        if item_amount <= 0:
+            messagebox.showerror("Validation Error", "Item Amount must be greater than 0")
+            return
+
+        if advance_amount < 0:
+            messagebox.showerror("Validation Error", "Advance Amount cannot be negative")
+            return
+
+        if advance_amount > item_amount:
+            messagebox.showerror("Validation Error", "Advance Amount cannot exceed Item Amount")
+            return
+
+        if total_installments <= 0:
+            messagebox.showerror("Validation Error", "Number of Installments must be greater than 0")
+            return
+
+        # Validate interest rate based on type
+        if interest_type.startswith('P'):  # PERCENT
+            if not (0 <= interest_rate <= 100):
+                messagebox.showerror("Validation Error", "Interest Rate (Percent) must be between 0 and 100")
+                return
+        else:  # ABSOLUTE
+            if interest_rate < 0:
+                messagebox.showerror("Validation Error", "Interest Amount must be non-negative")
+                return
+
         try:
             customer_id = int(self.customer_cb.get().split(" - ")[0])
 
             add_item(
                 customer_id=customer_id,
-                brand=self.entries["Brand"].get(),
-                model=self.entries["Model"].get(),
+                brand=brand,
+                model=model,
                 serial_no=None,
                 invoice_no=None,
-                item_amount=float(self.entries["Item Amount"].get()),
-                advance_amount=float(self.entries["Advance"].get()),
+                item_amount=item_amount,
+                advance_amount=advance_amount,
                 finance_amount=self.emi_data["finance_amount"],
-                interest_rate=float(self.entries["Interest"].get()),
+                interest_rate=interest_rate,
                 installment_mode=self.mode_cb.get(),
-                total_installments=int(self.entries["Installments"].get()),
+                total_installments=total_installments,
                 installment_amount=self.emi_data["installment_amount"],
                 start_date=date.today(),
-                interest_type=self.interest_type_cb.get().upper()
+                interest_type=interest_type
             )
 
             messagebox.showinfo("Success", "Item added successfully")

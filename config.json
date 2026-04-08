@@ -2,7 +2,7 @@
     "database": {
         "host": "localhost",
         "user": "root",
-        "password": "9246",
+        "password": "1234",
         "database": "sandhu_enterprises"
     }
 }
