@@ -1502,6 +1502,199 @@ class MainWindow:
         # ========== Search Logic ==========
         from models.report_model import get_all_customer_items  # You can modify this to include payment info
 
+        # Store search results for printing
+        self.current_search_results = []
+
+        def show_print_preview(content, auto_print=False):
+            """Show print preview in a text window for manual printing."""
+            preview_window = tk.Toplevel(self.root)
+            preview_window.title("Print Preview - Sandhu Enterprises Report")
+            preview_window.geometry("900x700")
+            
+            # Status label
+            status_label = tk.Label(preview_window, text="Preparing report...", fg="blue", font=("Arial", 10))
+            status_label.pack(pady=5)
+            
+            # Create text widget with scrollbar
+            text_frame = tk.Frame(preview_window)
+            text_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+            
+            scrollbar = tk.Scrollbar(text_frame)
+            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+            
+            text_widget = tk.Text(text_frame, wrap=tk.WORD, yscrollcommand=scrollbar.set, font=("Courier New", 10))
+            text_widget.pack(fill=tk.BOTH, expand=True)
+            scrollbar.config(command=text_widget.yview)
+            
+            # Insert content
+            text_widget.insert(tk.END, content)
+            text_widget.config(state=tk.DISABLED)
+            
+            # Buttons
+            button_frame = tk.Frame(preview_window)
+            button_frame.pack(fill=tk.X, padx=10, pady=5)
+            
+            # Print button
+            print_btn = tk.Button(
+                button_frame,
+                text="🖨️ Print Now",
+                command=lambda: print_text_widget(text_widget, status_label),
+                bg="#3498db",
+                fg="white",
+                font=("Arial", 10, "bold")
+            )
+            print_btn.pack(side=tk.LEFT, padx=5)
+            
+            # Save button
+            tk.Button(
+                button_frame,
+                text="💾 Save to File",
+                command=lambda: save_report_to_file(content),
+                bg="#27ae60",
+                fg="white",
+                font=("Arial", 10, "bold")
+            ).pack(side=tk.LEFT, padx=5)
+            
+            # Copy button
+            tk.Button(
+                button_frame,
+                text="📋 Copy to Clipboard",
+                command=lambda: copy_to_clipboard(content, status_label),
+                bg="#f39c12",
+                fg="white",
+                font=("Arial", 10, "bold")
+            ).pack(side=tk.LEFT, padx=5)
+            
+            tk.Button(
+                button_frame,
+                text="❌ Close",
+                command=preview_window.destroy,
+                bg="#95a5a6",
+                fg="white",
+                font=("Arial", 10, "bold")
+            ).pack(side=tk.RIGHT, padx=5)
+            
+            # Bind Ctrl+P for printing
+            preview_window.bind('<Control-p>', lambda e: print_text_widget(text_widget, status_label))
+            preview_window.focus_set()
+            
+            # Auto-print if requested
+            if auto_print:
+                status_label.config(text="Attempting to print automatically...", fg="orange")
+                preview_window.after(1000, lambda: print_text_widget(text_widget, status_label, show_messages=False))
+
+        def print_text_widget(text_widget, status_label=None, show_messages=True):
+            """Print the content of a text widget."""
+            if status_label:
+                status_label.config(text="Printing...", fg="orange")
+            
+            try:
+                # Get the content
+                content = text_widget.get("1.0", tk.END).strip()
+                
+                # Method 1: Try Windows print command
+                import tempfile
+                import subprocess
+                
+                with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False, encoding='utf-8') as f:
+                    f.write(content)
+                    temp_file = f.name
+                
+                try:
+                    # Try print command first
+                    result = subprocess.run(['print', temp_file], capture_output=True, text=True, timeout=10)
+                    
+                    if result.returncode == 0:
+                        if status_label:
+                            status_label.config(text="✅ Printed successfully to default printer!", fg="green")
+                        if show_messages:
+                            messagebox.showinfo("Print Success", "Report sent to your default printer!\n\nCheck your printer output.")
+                        return
+                    
+                except subprocess.TimeoutExpired:
+                    pass
+                except Exception as e:
+                    print(f"Print command failed: {e}")
+                
+                # Method 2: Try notepad /p
+                try:
+                    result = subprocess.run(['notepad.exe', '/p', temp_file], capture_output=True, text=True, timeout=15)
+                    
+                    if result.returncode == 0:
+                        if status_label:
+                            status_label.config(text="✅ Printed successfully via Notepad!", fg="green")
+                        if show_messages:
+                            messagebox.showinfo("Print Success", "Report sent to printer via Notepad!\n\nCheck your printer output.")
+                        return
+                    
+                except subprocess.TimeoutExpired:
+                    pass
+                except Exception as e:
+                    print(f"Notepad print failed: {e}")
+                
+                # Method 3: Show instructions for manual printing
+                if status_label:
+                    status_label.config(text="❌ Auto-print failed. Use manual options below.", fg="red")
+                
+                if show_messages:
+                    manual_msg = (
+                        "Automatic printing failed.\n\n"
+                        "To print manually:\n"
+                        "1. Click 'Save to File' to save the report\n"
+                        "2. Open the saved file in Notepad or Word\n"
+                        "3. Use File → Print\n\n"
+                        "Or click 'Copy to Clipboard' and paste into any document."
+                    )
+                    messagebox.showwarning("Print Failed", manual_msg)
+                    
+            except Exception as e:
+                error_msg = f"Printing error: {str(e)}"
+                print(error_msg)
+                if status_label:
+                    status_label.config(text=f"❌ Error: {str(e)}", fg="red")
+                if show_messages:
+                    messagebox.showerror("Print Error", f"Could not print:\n{error_msg}\n\nTry saving to file instead.")
+                    
+            finally:
+                # Clean up temp file
+                try:
+                    if 'temp_file' in locals():
+                        os.unlink(temp_file)
+                except:
+                    pass
+
+        def copy_to_clipboard(content, status_label=None):
+            """Copy content to clipboard."""
+            try:
+                self.root.clipboard_clear()
+                self.root.clipboard_append(content)
+                if status_label:
+                    status_label.config(text="✅ Report copied to clipboard!", fg="green")
+                messagebox.showinfo("Copied", "Report copied to clipboard!\n\nYou can now paste it into Word, Excel, or any text editor.")
+            except Exception as e:
+                if status_label:
+                    status_label.config(text=f"❌ Copy failed: {str(e)}", fg="red")
+                messagebox.showerror("Copy Error", f"Could not copy to clipboard:\n{str(e)}")
+
+        def save_report_to_file(content):
+            """Save the report content to a file."""
+            from tkinter import filedialog
+            
+            file_path = filedialog.asksaveasfilename(
+                defaultextension=".txt",
+                filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
+                title="Save Report As",
+                initialfile=f"sandhu_report_{date.today().strftime('%d%m%Y')}.txt"
+            )
+            
+            if file_path:
+                try:
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        f.write(content)
+                    messagebox.showinfo("Save Success", f"Report saved to:\n{file_path}\n\nYou can now open this file and print it from any text editor.")
+                except Exception as e:
+                    messagebox.showerror("Save Error", f"Could not save file:\n{str(e)}")
+
         def search_records():
             # Build filter dict from UI inputs
             # extract village name/address from combobox value 'id - name'
@@ -1564,6 +1757,9 @@ class MainWindow:
             # Call model search that performs SQL-level filtering (efficient)
             from models.report_model import search_customer_items
             rows = search_customer_items(filters)
+            
+            # Store results for printing
+            self.current_search_results = rows
 
             # Populate the grid with data
             populate_grid(rows)
@@ -1583,7 +1779,69 @@ class MainWindow:
             self.summary_labels["Total Due"].config(text=f"₹{total_due:,.0f}")
             self.summary_labels["Paid Records"].config(text=f"{paid_records}")
             self.summary_labels["Unpaid Records"].config(text=f"{unpaid_records}")
-                        
+
+        def print_search_results(search_rows):
+            """Print the current search results to A4 page."""
+            if not search_rows:
+                messagebox.showinfo("Print Results", "No records to print. Please search first.")
+                return
+            
+            # Calculate summary
+            total_records = len(search_rows)
+            total_amount = sum(row.get("item_amount") or 0 for row in search_rows)
+            total_paid = sum(row.get("total_paid") or 0 for row in search_rows)
+            total_due = sum(row.get("due_amount") or 0 for row in search_rows)
+            paid_records = sum(1 for row in search_rows if row.get("paid_status") == "Paid")
+            unpaid_records = sum(1 for row in search_rows if row.get("paid_status") == "Unpaid")
+            
+            # Create print content
+            print_content = []
+            print_content.append("SANDHU ENTERPRISES")
+            print_content.append("CUSTOMER ITEMS REPORT")
+            print_content.append("=" * 50)
+            print_content.append(f"Generated on: {date.today().strftime('%d-%m-%Y')}")
+            print_content.append("")
+            print_content.append("SUMMARY:")
+            print_content.append(f"Total Records: {total_records}")
+            print_content.append(f"Total Amount: ₹{total_amount:,.0f}")
+            print_content.append(f"Total Paid: ₹{total_paid:,.0f}")
+            print_content.append(f"Total Due: ₹{total_due:,.0f}")
+            print_content.append(f"Paid Records: {paid_records}")
+            print_content.append(f"Unpaid Records: {unpaid_records}")
+            print_content.append("")
+            print_content.append("DETAILED RECORDS:")
+            print_content.append("=" * 50)
+            
+            # Header (compact for A4)
+            header = f"{'Customer':<18} {'Phone':<10} {'Village':<12} {'Brand':<12} {'Model':<12} {'Amount':>8} {'Paid':>8} {'Due':>8} {'Status':<6}"
+            print_content.append(header)
+            print_content.append("-" * 50)
+            
+            # Records
+            for row in search_rows:
+                customer_name = str(row.get("customer_name", ""))[:18]
+                phone = str(row.get("customer_phone", ""))[:10]
+                village = str(row.get("village_name", ""))[:12]
+                brand = str(row.get("brand", ""))[:12]
+                model = str(row.get("model", ""))[:12]
+                item_amount = float(row.get("item_amount") or 0)
+                total_paid = float(row.get("total_paid") or 0)
+                due_amount = float(row.get("due_amount") or 0)
+                paid_status = str(row.get("paid_status", ""))[:6]
+                
+                record_line = f"{customer_name:<18} {phone:<10} {village:<12} {brand:<12} {model:<12} {item_amount:>8,.0f} {total_paid:>8,.0f} {due_amount:>8,.0f} {paid_status:<6}"
+                print_content.append(record_line)
+            
+            print_content.append("=" * 50)
+            
+            # Create a temporary text file for printing
+            import tempfile
+            import os
+            
+            content_text = '\n'.join(print_content)
+            
+            # Always show preview first, then try to print
+            show_print_preview(content_text, auto_print=True)
 
         # Search button
         tk.Button(
@@ -1597,20 +1855,20 @@ class MainWindow:
 
         tk.Button(
             filter_frame,
-            text="� Payment Records",
-            bg="#f39c12",
+            text="🖨️ Print Results",
+            bg="#9b59b6",
             fg="white",
             font=("Arial", 10, "bold"),
-            command=lambda: self.open_payment_records()
+            command=lambda: print_search_results(self.current_search_results)
         ).grid(row=0, column=9, padx=10)
 
         tk.Button(
             filter_frame,
-            text="💸 Record Payment",
-            bg="#27ae60",
+            text="💰 Payment Records",
+            bg="#f39c12",
             fg="white",
             font=("Arial", 10, "bold"),
-            command=lambda: self.open_record_payment()
+            command=lambda: self.open_payment_records()
         ).grid(row=0, column=10, padx=10)
 
         # ========== Summary Statistics ==========
