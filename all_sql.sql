@@ -38,6 +38,9 @@ ALTER TABLE customers ADD COLUMN village_id INT NULL
 ALTER TABLE customers ADD COLUMN entry_date DATE NULL
 
 ALTER TABLE items ADD COLUMN interest_type VARCHAR(20) DEFAULT 'PERCENT' NULL
+ALTER TABLE items ADD COLUMN serial_no VARCHAR(255) NULL
+ALTER TABLE items ADD COLUMN invoice_no VARCHAR(255) NULL
+ALTER TABLE items ADD COLUMN status VARCHAR(20) DEFAULT 'ACTIVE' NULL
 
 -- From models/village_model.py
 INSERT INTO villages (name) VALUES (%s)

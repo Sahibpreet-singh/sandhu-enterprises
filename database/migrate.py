@@ -101,6 +101,30 @@ def run_migration():
         else:
             print('Column already exists: items.interest_type')
 
+        if not column_exists(conn, 'items', 'serial_no'):
+            cur = conn.cursor()
+            cur.execute("ALTER TABLE items ADD COLUMN serial_no VARCHAR(255) NULL")
+            cur.close()
+            print('Added column: items.serial_no')
+        else:
+            print('Column already exists: items.serial_no')
+
+        if not column_exists(conn, 'items', 'invoice_no'):
+            cur = conn.cursor()
+            cur.execute("ALTER TABLE items ADD COLUMN invoice_no VARCHAR(255) NULL")
+            cur.close()
+            print('Added column: items.invoice_no')
+        else:
+            print('Column already exists: items.invoice_no')
+
+        if not column_exists(conn, 'items', 'status'):
+            cur = conn.cursor()
+            cur.execute("ALTER TABLE items ADD COLUMN status VARCHAR(20) DEFAULT 'ACTIVE' NULL")
+            cur.close()
+            print('Added column: items.status')
+        else:
+            print('Column already exists: items.status')
+
         conn.commit()
     finally:
         conn.close()
