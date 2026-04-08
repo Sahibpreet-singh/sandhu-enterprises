@@ -121,6 +121,7 @@ class MainWindow:
         ).pack(fill=tk.X)
 
         buttons = [
+            ("🏠 Home", self.show_home),
             ("👥 Customers", self.open_customers),
             ("📊 Records", self.open_items),   # renamed logically
             ("💰 Payments", self.open_payments),
@@ -150,6 +151,12 @@ class MainWindow:
             # Hover effect
             btn.bind("<Enter>", lambda e, b=btn: b.config(bg="#2980b9"))
             btn.bind("<Leave>", lambda e, b=btn: b.config(bg="#3498db"))
+
+    # ================= HOME =================
+    def show_home(self):
+        """Clear content area and show the home/welcome screen."""
+        self.content_frame.destroy()
+        self.create_content_area()
 
     # ================= MAIN CONTENT =================
     def create_content_area(self):
@@ -211,10 +218,11 @@ class MainWindow:
         ).pack(pady=(0, 10))
 
         actions = [
-            ("➕ Add Customer", self.add_customer),
-            ("💰 Record Payment", self.open_record_payment),
-            ("📊 View Records", self.open_items),
-            ("🔍 Search Payments", self.open_payments)
+            ("➕ Installment Cases", self.open_customers),
+            ("🔍 Due payments", self.open_payments),
+            ("💰 Credit Cases", self.open_record_payment),
+            ("📊 Due installments", self.open_items),
+            ("➕ Setup Villages", self.open_customers)
         ]
 
         for text, command in actions:
@@ -244,46 +252,7 @@ class MainWindow:
         # Store stat labels for refresh
         self.stat_labels = []
 
-        # Get stats
-        try:
-            from models.customer_model import get_total_customers
-            from models.item_model import get_total_items
-            from models.payment_model import get_total_payments, get_total_due
-            total_customers = get_total_customers()
-            total_items = get_total_items()
-            total_payments = get_total_payments()
-            total_due = get_total_due()
-        except Exception:
-            total_customers = total_items = total_payments = total_due = 0
-
-        stats = [
-            ("👥 Total Customers", total_customers, "#3498db"),
-            ("📦 Total Items", total_items, "#e74c3c"),
-            ("💰 Total Payments", f"₹{total_payments:,.0f}", "#27ae60"),
-            ("📊 Total Due", f"₹{total_due:,.0f}", "#f39c12")
-        ]
-
-        for i, (label, value, color) in enumerate(stats):
-            stat_card = tk.Frame(stats_frame, bg=color, bd=2, relief="raised")
-            stat_card.grid(row=0, column=i, padx=10, pady=5, ipadx=20, ipady=10)
-
-            tk.Label(
-                stat_card,
-                text=label,
-                font=("Arial", 10, "bold"),
-                fg="white",
-                bg=color
-            ).pack()
-
-            value_label = tk.Label(
-                stat_card,
-                text=str(value),
-                font=("Arial", 16, "bold"),
-                fg="white",
-                bg=color
-            )
-            value_label.pack()
-            self.stat_labels.append(value_label)
+        
 
         # Refresh button
         tk.Button(
