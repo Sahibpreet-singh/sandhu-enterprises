@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from datetime import date
+from datetime import date, datetime
 
 from models.customer_model import get_all_customers
 from models.item_model import add_item
@@ -47,7 +47,8 @@ class ItemUI:
             "Advance",
             "Interest",
             "Installments",
-            "Mode"
+            "Mode",
+            "Payment Date"
         ]
 
         self.entries = {}
@@ -78,6 +79,7 @@ class ItemUI:
         self.mode_cb.grid(row=7, column=1, padx=5, pady=2)
         self.mode_cb.set("MONTHLY")
         self.mode_cb.bind("<<ComboboxSelected>>", self.on_mode_change)
+        self.entries["Payment Date"].config(state="disabled")
 
         # -------- Buttons --------
         btn_frame = tk.Frame(form, bg="#f5f7fa")
@@ -133,8 +135,13 @@ class ItemUI:
             self.entries["Installments"].delete(0, tk.END)
             self.entries["Installments"].insert(0, "1")
             self.entries["Installments"].config(state="disabled")
+            self.entries["Payment Date"].config(state="normal")
+            self.entries["Payment Date"].delete(0, tk.END)
+            self.entries["Payment Date"].insert(0, date.today().strftime('%d-%m-%Y'))
         else:
             self.entries["Installments"].config(state="normal")
+            self.entries["Payment Date"].delete(0, tk.END)
+            self.entries["Payment Date"].config(state="disabled")
 
     # ================= EMI CALCULATION =================
     def calculate(self):
@@ -205,6 +212,9 @@ class ItemUI:
         if not installments_str:
             messagebox.showerror("Validation Error", "Number of Installments is required")
             return
+        if self.mode_cb.get() == "ONE-TIME" and not self.entries["Payment Date"].get().strip():
+            messagebox.showerror("Validation Error", "Payment Date is required for ONE-TIME mode")
+            return
 
         # Validate numeric fields
         try:
@@ -230,6 +240,20 @@ class ItemUI:
         except ValueError:
             messagebox.showerror("Validation Error", "Number of Installments must be a valid whole number")
             return
+
+        # Parse payment date for ONE-TIME
+        payment_date_str = self.entries["Payment Date"].get().strip()
+        if self.mode_cb.get() == "ONE-TIME":
+            try:
+                try:
+                    payment_date = datetime.strptime(payment_date_str, '%d-%m-%Y').date()
+                except ValueError:
+                    payment_date = date.fromisoformat(payment_date_str)
+            except Exception:
+                messagebox.showerror("Validation Error", "Payment Date must be DD-MM-YYYY or YYYY-MM-DD")
+                return
+        else:
+            payment_date = date.today()
 
         # Validate ranges and logic
         if item_amount <= 0:
@@ -274,7 +298,7 @@ class ItemUI:
                 installment_mode=self.mode_cb.get(),
                 total_installments=total_installments,
                 installment_amount=self.emi_data["installment_amount"],
-                start_date=date.today(),
+                start_date=payment_date,
                 interest_type=interest_type
             )
 

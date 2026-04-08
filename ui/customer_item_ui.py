@@ -110,7 +110,7 @@ class CustomerItemUI:
         tk.Label(form, text="Item / EMI Information", font=("Arial", 14, "bold"), bg="#f5f7fa", fg="#2c3e50").grid(row=row, column=0, columnspan=2, pady=10)
         row += 1
 
-        labels = ["Brand", "Model", "Item Amount", "Advance", "Interest", "Installments", "Mode"]
+        labels = ["Brand", "Model", "Item Amount", "Advance", "Interest", "Installments", "Mode", "Payment Date"]
         self.entries = {}
 
         interest_row = None
@@ -136,6 +136,7 @@ class CustomerItemUI:
         self.interest_type_cb = ttk.Combobox(form, values=["Percent", "Amount"], state="readonly", width=10)
         self.interest_type_cb.grid(row=interest_row, column=2, padx=5)
         self.interest_type_cb.set("Percent")
+        self.entries["Payment Date"].config(state="disabled")
 
         # --------- GUARANTOR INFO ---------
         tk.Label(form, text="Guarantor Information", font=("Arial", 12, "bold")).grid(row=row, column=0, columnspan=2, pady=10)
@@ -193,8 +194,13 @@ class CustomerItemUI:
             self.entries["Installments"].delete(0, tk.END)
             self.entries["Installments"].insert(0, "1")
             self.entries["Installments"].config(state="disabled")
+            self.entries["Payment Date"].config(state="normal")
+            self.entries["Payment Date"].delete(0, tk.END)
+            self.entries["Payment Date"].insert(0, date.today().strftime('%d-%m-%Y'))
         else:
             self.entries["Installments"].config(state="normal")
+            self.entries["Payment Date"].delete(0, tk.END)
+            self.entries["Payment Date"].config(state="disabled")
 
     # ================= EMI CALCULATION =================
     def calculate_emi(self):
@@ -308,6 +314,7 @@ class CustomerItemUI:
         advance_str = self.entries["Advance"].get().strip()
         interest_str = self.entries["Interest"].get().strip()
         installments_str = self.entries["Installments"].get().strip()
+        payment_date_str = self.entries["Payment Date"].get().strip()
         interest_type = self.interest_type_cb.get().upper()
 
         # Check required fields
@@ -328,6 +335,10 @@ class CustomerItemUI:
             return
         if not installments_str:
             messagebox.showerror("Validation Error", "Number of Installments is required")
+            return
+
+        if self.mode_cb.get() == "ONE-TIME" and not payment_date_str:
+            messagebox.showerror("Validation Error", "Payment Date is required for ONE-TIME mode")
             return
 
         # Validate numeric fields
@@ -371,6 +382,21 @@ class CustomerItemUI:
         if total_installments <= 0:
             messagebox.showerror("Validation Error", "Number of Installments must be greater than 0")
             return
+
+        # Parse payment date for ONE-TIME
+        start_date = date.today()
+        if self.mode_cb.get() == "ONE-TIME":
+            try:
+                try:
+                    start_date = datetime.strptime(payment_date_str, '%d-%m-%Y').date()
+                except ValueError:
+                    start_date = date.fromisoformat(payment_date_str)
+            except Exception:
+                messagebox.showerror("Validation Error", "Payment Date must be DD-MM-YYYY or YYYY-MM-DD")
+                return
+        elif entry_date_str:
+            # Use the provided entry_date as item start_date
+            start_date = date.fromisoformat(entry_date_str)
 
         # Validate interest rate based on type
         if interest_type.startswith('P'):  # PERCENT
