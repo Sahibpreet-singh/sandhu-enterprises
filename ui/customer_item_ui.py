@@ -14,166 +14,295 @@ class CustomerItemUI:
     def __init__(self, root):
         self.root = root
         self.window = tk.Toplevel(root)
-        self.window.title("Add Customer with Item & Guarantor")
-        self.window.geometry("600x750")
+        self.window.title("NEW CASE DETAILS")
+        self.window.geometry("1180x720")
+        self.window.configure(bg="#eef4f7")
         self.window.resizable(False, False)
 
-        self.num_guarantors = tk.IntVar(value=1)
+        self.num_guarantors = tk.IntVar(value=2)
         self.emi_data = None
         self.guarantor_entries = []
 
-        self.ask_num_guarantors()
+        self.show_full_form()
 
-    # ================= STEP 1: Ask Number of Guarantors =================
-    def ask_num_guarantors(self):
-        self.clear_window()
-
-        tk.Label(self.window, text="Select Number of Guarantors", font=("Arial", 12, "bold")).pack(pady=20)
-
-        num_cb = ttk.Combobox(self.window, textvariable=self.num_guarantors, values=[1, 2], state="readonly", width=20)
-        num_cb.pack(pady=10)
-        self.num_guarantors.set(1)
-
-        tk.Button(self.window, text="Next", command=self.show_full_form).pack(pady=20)
-
-    # ================= STEP 2: Show Full Form =================
+    # ================= STEP 1: Show Full Form =================
     def show_full_form(self):
         self.clear_window()
-        row = 0
-        form = tk.Frame(self.window, padx=10, pady=10)
-        form.pack(fill=tk.BOTH, expand=True)
-        self.form_frame = form
 
-        # --------- CUSTOMER INFO ---------
-        tk.Label(form, text="Customer Information", font=("Arial", 14, "bold"), bg="#f5f7fa", fg="#2c3e50").grid(row=row, column=0, columnspan=2, pady=10)
-        row += 1
+        self.window.configure(bg="#eef4f7")
 
-        tk.Label(form, text="Name:").grid(row=row, column=0, sticky="e")
-        self.name_entry = tk.Entry(form, width=40)
-        self.name_entry.grid(row=row, column=1, pady=2)
-        row += 1
+        outer = tk.Frame(self.window, bg="#eef4f7", padx=18, pady=14)
+        outer.pack(fill=tk.BOTH, expand=True)
 
-        tk.Label(form, text="Phone:").grid(row=row, column=0, sticky="e")
-        self.phone_entry = tk.Entry(form, width=40)
-        self.phone_entry.grid(row=row, column=1, pady=2)
-        row += 1
+        title_bar = tk.Frame(outer, bg="#dbe8ef", relief="groove", bd=1, height=26)
+        title_bar.pack(fill="x", pady=(0, 12))
+        title_bar.pack_propagate(False)
+        tk.Label(
+            title_bar,
+            text="NEW CASE DETAILS",
+            font=("Arial", 10, "bold"),
+            bg="#dbe8ef",
+            fg="#4d5b63",
+            anchor="w",
+            padx=10,
+        ).pack(fill="both")
 
-        tk.Label(form, text="Address:").grid(row=row, column=0, sticky="e")
-        # editable so typing filters suggestions
-        self.address_cb = ttk.Combobox(form, width=37, state="normal")
-        self.address_cb.grid(row=row, column=1, pady=2)
-        tk.Button(form, text="Add Address", command=self.add_address_dialog).grid(row=row, column=2, padx=5)
-        row += 1
+        content = tk.Frame(outer, bg="#eef4f7")
+        content.pack(fill="both", expand=True)
 
-        # full lists for local filtering
+        left_panel = tk.Frame(content, bg="#eef4f7")
+        left_panel.pack(side="left", fill="both", expand=True, padx=(0, 10))
+
+        right_panel = tk.Frame(content, bg="#eef4f7", width=420)
+        right_panel.pack(side="right", fill="y")
+        right_panel.pack_propagate(False)
+
+        self.build_customer_section(left_panel)
+        self.build_guarantor_section(left_panel)
+
+        tk.Button(
+            left_panel,
+            text="CANCEL Esc",
+            command=self.window.destroy,
+            font=("Arial", 12, "bold"),
+            width=14,
+            bg="#dfe7dd",
+            activebackground="#ced9cb",
+            relief="ridge",
+            bd=1,
+        ).pack(side="left", padx=(140, 10), pady=(18, 0))
+
+        tk.Button(
+            left_panel,
+            text="SAVE & EXIT F10",
+            command=self.save_all,
+            font=("Arial", 12, "bold"),
+            width=14,
+            bg="#dfe7dd",
+            activebackground="#ced9cb",
+            relief="ridge",
+            bd=1,
+        ).pack(side="left", pady=(18, 0))
+
+        self.result_label = tk.Label(left_panel, text="", fg="#b03a2e", bg="#eef4f7", font=("Arial", 10, "bold"))
+        self.result_label.pack(anchor="w", padx=145, pady=(8, 0))
+
+        self.build_item_section(right_panel)
+
+        self.load_address_village()
+        self.calculate_emi()
+
+    def build_customer_section(self, parent):
+        section = tk.Frame(parent, bg="#eef4f7")
+        section.pack(fill="x")
+
+        self.case_id_var = tk.StringVar(value="36")
+
+        row1 = tk.Frame(section, bg="#eef4f7")
+        row1.pack(fill="x", pady=(8, 8))
+        tk.Label(row1, text="FILE NO", font=("Arial", 10), bg="#eef4f7", width=10, anchor="w").pack(side="left")
+        self.file_no_entry = tk.Entry(row1, width=16, relief="solid", bd=1)
+        self.file_no_entry.pack(side="left", padx=(0, 24))
+        tk.Label(row1, text="DATE", font=("Arial", 10), bg="#eef4f7", width=6, anchor="w").pack(side="left")
+        self.date_entry = tk.Entry(row1, width=12, relief="solid", bd=1)
+        self.date_entry.pack(side="left")
+        self.date_entry.insert(0, date.today().strftime("%d-%m-%Y"))
+
+        self.name_entry = self._build_labeled_entry(section, "ACCOUNT", width=41)
+        self.phone_entry = self._build_labeled_entry(section, "W/O D/O S/O", width=41)
+        self.address_cb = self._build_labeled_combobox(section, "ADDRESS", width=38)
+        self.village_cb = self._build_labeled_combobox(section, "VILLAGE", width=38)
+        self.mobile_no_entry = self._build_labeled_entry(section, "MOBILE NO", width=41)
+        self.remarks_entry = self._build_labeled_entry(section, "REMARKS", width=41)
+
         self.address_full = []
-
-        tk.Label(form, text="Remarks:").grid(row=row, column=0, sticky="e")
-        self.remarks_entry = tk.Entry(form, width=40)
-        self.remarks_entry.grid(row=row, column=1, pady=2)
-        row += 1
-
-        tk.Label(form, text="Entry Date (DD-MM-YYYY):").grid(row=row, column=0, sticky="e")
-        self.date_entry = tk.Entry(form, width=40)
-        self.date_entry.grid(row=row, column=1, pady=2)
-        self.date_entry.insert(0, date.today().strftime('%d-%m-%Y'))
-        row += 1
-
-        tk.Label(form, text="Village:").grid(row=row, column=0, sticky="e")
-        self.village_cb = ttk.Combobox(form, width=37, state="normal")
-        self.village_cb.grid(row=row, column=1, pady=2)
-        tk.Button(form, text="Add Village", command=self.add_village_dialog).grid(row=row, column=2, padx=5)
-        row += 1
-
-        # full lists for local filtering
         self.village_full = []
 
-        # after creating widgets, bind key-release to filter suggestions
         def _filter(cb, full_list):
             val = cb.get()
             if not val:
-                cb['values'] = full_list
+                cb["values"] = full_list
                 return
             val_l = val.strip().lower()
             matches = [s for s in full_list if val_l in s.lower()]
-            cb['values'] = matches
+            cb["values"] = matches
             if matches:
                 try:
-                    cb.event_generate('<Down>')
+                    cb.event_generate("<Down>")
                 except Exception:
                     pass
 
-        self.address_cb.bind('<KeyRelease>', lambda e: _filter(self.address_cb, self.address_full))
-        self.village_cb.bind('<KeyRelease>', lambda e: _filter(self.village_cb, self.village_full))
+        self.address_cb.bind("<KeyRelease>", lambda e: _filter(self.address_cb, self.address_full))
+        self.village_cb.bind("<KeyRelease>", lambda e: _filter(self.village_cb, self.village_full))
 
-        # --------- ITEM / EMI INFO ---------
-        tk.Label(form, text="Item / EMI Information", font=("Arial", 14, "bold"), bg="#f5f7fa", fg="#2c3e50").grid(row=row, column=0, columnspan=2, pady=10)
-        row += 1
+    def build_item_section(self, parent):
+        section = tk.Frame(parent, bg="#eef4f7")
+        section.pack(fill="both", expand=True)
 
-        labels = ["Brand", "Model", "Item Amount", "Advance", "Interest", "Installments", "Mode", "Payment Date"]
+        header = tk.Frame(section, bg="#eef4f7")
+        header.pack(fill="x", pady=(28, 10))
+        tk.Label(header, text="ITEM PARTICULARS", font=("Arial", 14, "bold"), bg="#eef4f7", fg="#3d4950").pack(side="left", padx=(0, 16))
+
+        photo_and_case = tk.Frame(header, bg="#eef4f7")
+        photo_and_case.pack(side="right", anchor="n")
+
+        case_row = tk.Frame(photo_and_case, bg="#eef4f7")
+        case_row.pack(anchor="e", pady=(0, 4))
+        tk.Label(case_row, text="CASE ID", font=("Arial", 9), bg="#eef4f7", fg="#4d5b63").pack(side="left", padx=(0, 6))
+        tk.Label(case_row, textvariable=self.case_id_var, font=("Arial", 9), bg="#eef4f7", fg="#5166c2").pack(side="left")
+
+        self.photo_canvas = tk.Canvas(photo_and_case, width=190, height=170, bg="#f8fbef", highlightthickness=1, highlightbackground="#8d9a84")
+        self.photo_canvas.pack()
+        self.photo_canvas.create_line(0, 0, 190, 170, fill="#b2bba9")
+        self.photo_canvas.create_line(190, 0, 0, 170, fill="#b2bba9")
+
+        form = tk.Frame(section, bg="#eef4f7")
+        form.pack(fill="x", pady=(0, 10))
+
         self.entries = {}
 
-        interest_row = None
-        for text in labels:
-            tk.Label(form, text=text+":").grid(row=row, column=0, sticky="e")
-            if text == "Mode":
-                self.mode_cb = ttk.Combobox(form, values=["MONTHLY", "WEEKLY", "DAILY", "ONE-TIME"], state="readonly", width=37)
-                self.mode_cb.grid(row=row, column=1, pady=2)
-                self.mode_cb.set("MONTHLY")
-                self.mode_cb.bind("<<ComboboxSelected>>", self.on_mode_change)
-            else:
-                entry = tk.Entry(form, width=40)
-                entry.grid(row=row, column=1, pady=2)
-                self.entries[text] = entry
-                if text == "Interest":
-                    # remember row where Interest is placed so we can position the interest type combobox next to it
-                    interest_row = row
-            row += 1
+        row = tk.Frame(form, bg="#eef4f7")
+        row.pack(fill="x", pady=4)
+        tk.Label(row, text="ITEM", font=("Arial", 10), bg="#eef4f7", width=9, anchor="w").pack(side="left")
+        self.item_entry = tk.Entry(row, width=28, relief="solid", bd=1)
+        self.item_entry.pack(side="left", padx=(0, 16))
+        self.entries["Brand"] = self.item_entry
 
-        # Interest type combobox (placed next to Interest)
-        if interest_row is None:
-            interest_row = 0
-        self.interest_type_cb = ttk.Combobox(form, values=["Percent", "Amount"], state="readonly", width=10)
-        self.interest_type_cb.grid(row=interest_row, column=2, padx=5)
-        self.interest_type_cb.set("Percent")
+        row = tk.Frame(form, bg="#eef4f7")
+        row.pack(fill="x", pady=4)
+        tk.Label(row, text="BRAND", font=("Arial", 10), bg="#eef4f7", width=9, anchor="w").pack(side="left")
+        brand_entry = tk.Entry(row, width=16, relief="solid", bd=1)
+        brand_entry.pack(side="left", padx=(0, 10))
+        tk.Label(row, text="MODEL", font=("Arial", 10), bg="#eef4f7", width=8, anchor="w").pack(side="left")
+        model_entry = tk.Entry(row, width=14, relief="solid", bd=1)
+        model_entry.pack(side="left")
+        self.entries["Brand"] = brand_entry
+        self.entries["Model"] = model_entry
+
+        row = tk.Frame(form, bg="#eef4f7")
+        row.pack(fill="x", pady=4)
+        tk.Label(row, text="SRNO", font=("Arial", 10), bg="#eef4f7", width=9, anchor="w").pack(side="left")
+        self.serial_no_entry = tk.Entry(row, width=28, relief="solid", bd=1)
+        self.serial_no_entry.pack(side="left")
+        self.entries["Serial No"] = self.serial_no_entry
+
+        row = tk.Frame(form, bg="#eef4f7")
+        row.pack(fill="x", pady=4)
+        tk.Label(row, text="INVOICE NO.", font=("Arial", 10), bg="#eef4f7", width=9, anchor="w").pack(side="left")
+        self.invoice_no_entry = tk.Entry(row, width=28, relief="solid", bd=1)
+        self.invoice_no_entry.pack(side="left")
+        self.entries["Invoice No"] = self.invoice_no_entry
+
+        row = tk.Frame(form, bg="#eef4f7")
+        row.pack(fill="x", pady=4)
+        tk.Label(row, text="AMOUNT", font=("Arial", 10), bg="#eef4f7", width=9, anchor="w").pack(side="left")
+        item_amount_entry = tk.Entry(row, width=18, relief="solid", bd=1)
+        item_amount_entry.pack(side="left", padx=(0, 12))
+        tk.Label(row, text="ADVANCE", font=("Arial", 10), bg="#eef4f7", width=10, anchor="w").pack(side="left")
+        advance_entry = tk.Entry(row, width=12, relief="solid", bd=1)
+        advance_entry.pack(side="left")
+        self.entries["Item Amount"] = item_amount_entry
+        self.entries["Advance"] = advance_entry
+
+        row = tk.Frame(form, bg="#eef4f7")
+        row.pack(fill="x", pady=4)
+        tk.Label(row, text="AMOUNT FINANCED", font=("Arial", 10), bg="#eef4f7", width=16, anchor="w").pack(side="left")
+        self.finance_amount_value = tk.Label(row, text="0.00", font=("Arial", 9), bg="#eef4f7", fg="#c0392b", width=10, anchor="w")
+        self.finance_amount_value.pack(side="left", padx=(0, 10))
+        tk.Label(row, text="NO. OF INSTALMENTS", font=("Arial", 10), bg="#eef4f7", width=18, anchor="w").pack(side="left")
+        installments_entry = tk.Entry(row, width=8, relief="solid", bd=1)
+        installments_entry.pack(side="left")
+        self.entries["Installments"] = installments_entry
+
+        row = tk.Frame(form, bg="#eef4f7")
+        row.pack(fill="x", pady=4)
+        tk.Label(row, text="INSTALMENT AMOUNT", font=("Arial", 10), bg="#eef4f7", width=16, anchor="w").pack(side="left")
+        self.installment_amount_value = tk.Label(row, text="0.00", font=("Arial", 9), bg="#eef4f7", fg="#c0392b", width=10, anchor="w")
+        self.installment_amount_value.pack(side="left", padx=(0, 10))
+        tk.Label(row, text="FINAL AMOUNT", font=("Arial", 10), bg="#eef4f7", width=12, anchor="w").pack(side="left")
+        self.final_amount_value = tk.Label(row, text="0.00", font=("Arial", 9), bg="#eef4f7", fg="#c0392b", width=10, anchor="w")
+        self.final_amount_value.pack(side="left")
+
+        hidden = tk.Frame(section, bg="#eef4f7")
+        hidden.pack(fill="x", pady=(10, 0))
+
+        interest_row = tk.Frame(hidden, bg="#eef4f7")
+        interest_row.pack(anchor="w")
+        tk.Label(interest_row, text="Interest", font=("Arial", 10), bg="#eef4f7", width=16, anchor="w").pack(side="left")
+        interest_entry = tk.Entry(interest_row, width=18, relief="solid", bd=1)
+        interest_entry.pack(side="left", padx=(0, 8))
+        self.entries["Interest"] = interest_entry
+        self.interest_type_cb = ttk.Combobox(interest_row, values=["Percent", "Amount"], state="readonly", width=10)
+        self.interest_type_cb.pack(side="left")
+        self.interest_type_cb.set("Amount")
+
+        mode_row = tk.Frame(hidden, bg="#eef4f7")
+        mode_row.pack(anchor="w", pady=(6, 0))
+        tk.Label(mode_row, text="Mode", font=("Arial", 10), bg="#eef4f7", width=16, anchor="w").pack(side="left")
+        self.mode_cb = ttk.Combobox(mode_row, values=["MONTHLY", "WEEKLY", "DAILY", "ONE-TIME"], state="readonly", width=18)
+        self.mode_cb.pack(side="left", padx=(0, 8))
+        self.mode_cb.set("MONTHLY")
+        self.mode_cb.bind("<<ComboboxSelected>>", self.on_mode_change)
+
+        tk.Label(mode_row, text="Payment Date", font=("Arial", 10), bg="#eef4f7", width=12, anchor="w").pack(side="left")
+        payment_date_entry = tk.Entry(mode_row, width=16, relief="solid", bd=1)
+        payment_date_entry.pack(side="left")
+        self.entries["Payment Date"] = payment_date_entry
         self.entries["Payment Date"].config(state="disabled")
 
-        # --------- GUARANTOR INFO ---------
-        tk.Label(form, text="Guarantor Information", font=("Arial", 12, "bold")).grid(row=row, column=0, columnspan=2, pady=10)
-        row += 1
+        for key in ["Item Amount", "Advance", "Interest", "Installments"]:
+            self.entries[key].bind("<KeyRelease>", lambda e: self.calculate_emi())
 
-        self.guarantor_entries = []
-        for i in range(self.num_guarantors.get()):
-            tk.Label(form, text=f"Guarantor {i+1} Name:").grid(row=row, column=0, sticky="e")
-            name_entry = tk.Entry(form, width=40)
-            name_entry.grid(row=row, column=1, pady=2)
-            row += 1
+    def build_guarantor_section(self, parent):
+        wrapper = tk.Frame(parent, bg="#eef4f7")
+        wrapper.pack(fill="x", pady=(18, 0))
 
-            tk.Label(form, text=f"Guarantor {i+1} Phone:").grid(row=row, column=0, sticky="e")
-            phone_entry = tk.Entry(form, width=40)
-            phone_entry.grid(row=row, column=1, pady=2)
-            row += 1
+        first = tk.Frame(wrapper, bg="#eef4f7")
+        first.pack(side="left", fill="x", expand=True, padx=(0, 22))
 
-            tk.Label(form, text=f"Guarantor {i+1} Address:").grid(row=row, column=0, sticky="e")
-            address_entry = tk.Entry(form, width=40)
-            address_entry.grid(row=row, column=1, pady=2)
-            row += 1
+        second = tk.Frame(wrapper, bg="#eef4f7")
+        second.pack(side="left", fill="x", expand=True)
 
-            self.guarantor_entries.append({
-                "name": name_entry,
-                "phone": phone_entry,
-                "address": address_entry
-            })
+        tk.Label(first, text="FIRST GUARANTOR PARTICULARS", font=("Arial", 14, "bold"), bg="#eef4f7", fg="#3d4950").pack(anchor="w", pady=(0, 10))
+        tk.Label(second, text="SECOND GUARANTOR PARTICULARS", font=("Arial", 14, "bold"), bg="#eef4f7", fg="#3d4950").pack(anchor="w", pady=(0, 10))
 
-        # --------- BUTTONS ---------
-        tk.Button(form, text="Calculate EMI", command=self.calculate_emi, font=("Arial", 12, "bold"), bg="#3498db", fg="white", width=15, height=2).grid(row=row, column=0, pady=10)
-        tk.Button(form, text="Save All", command=self.save_all, font=("Arial", 12, "bold"), bg="#2ecc71", fg="white", width=15, height=2).grid(row=row, column=1, pady=10)
-        row += 1
+        self.guarantor_entries = [
+            self._build_guarantor_fields(first),
+            self._build_guarantor_fields(second),
+        ]
 
-        self.result_label = tk.Label(form, text="", fg="green")
-        self.result_label.grid(row=row, column=0, columnspan=2)
-        # populate address/village lists
-        self.load_address_village()
+    def _build_guarantor_fields(self, parent):
+        name_entry = self._build_labeled_entry(parent, "NAME", width=33)
+        phone_entry = self._build_labeled_entry(parent, "W/O D/O S/O", width=33)
+        address_entry = self._build_labeled_entry(parent, "ADDRESS", width=33)
+        village_entry = self._build_labeled_entry(parent, "VILLAGE", width=33)
+        mobile_entry = self._build_labeled_entry(parent, "MOBILE NO", width=33)
+        remarks_entry = self._build_labeled_entry(parent, "REMARKS", width=33)
+
+        return {
+            "name": name_entry,
+            "phone": mobile_entry,
+            "address": address_entry,
+            "village": village_entry,
+            "relation": phone_entry,
+            "remarks": remarks_entry,
+        }
+
+    def _build_labeled_entry(self, parent, label, width=40):
+        row = tk.Frame(parent, bg="#eef4f7")
+        row.pack(fill="x", pady=4)
+        tk.Label(row, text=label, font=("Arial", 10), bg="#eef4f7", width=12, anchor="w").pack(side="left")
+        entry = tk.Entry(row, width=width, relief="solid", bd=1)
+        entry.pack(side="left")
+        return entry
+
+    def _build_labeled_combobox(self, parent, label, width=38):
+        row = tk.Frame(parent, bg="#eef4f7")
+        row.pack(fill="x", pady=4)
+        tk.Label(row, text=label, font=("Arial", 10), bg="#eef4f7", width=12, anchor="w").pack(side="left")
+        cb = ttk.Combobox(row, width=width, state="normal")
+        cb.pack(side="left")
+        return cb
 
     # ================= CLEAR WINDOW =================
     def clear_window(self):
@@ -196,26 +325,34 @@ class CustomerItemUI:
             self.entries["Installments"].config(state="disabled")
             self.entries["Payment Date"].config(state="normal")
             self.entries["Payment Date"].delete(0, tk.END)
-            self.entries["Payment Date"].insert(0, date.today().strftime('%d-%m-%Y'))
+            self.entries["Payment Date"].insert(0, date.today().strftime("%d-%m-%Y"))
         else:
             self.entries["Installments"].config(state="normal")
             self.entries["Payment Date"].delete(0, tk.END)
             self.entries["Payment Date"].config(state="disabled")
+        self.calculate_emi()
 
     # ================= EMI CALCULATION =================
     def calculate_emi(self):
         try:
-            item_amount = float(self.entries["Item Amount"].get())
-            advance = float(self.entries["Advance"].get())
-            interest = float(self.entries["Interest"].get())
-            installments = int(self.entries["Installments"].get())
+            item_amount = float(self.entries["Item Amount"].get() or 0)
+            advance = float(self.entries["Advance"].get() or 0)
+            interest = float(self.entries["Interest"].get() or 0)
+            installments = int(self.entries["Installments"].get() or 1)
 
-            interest_type = self.interest_type_cb.get() or 'Percent'
+            interest_type = self.interest_type_cb.get() or "Percent"
 
             self.emi_data = calculate_emi(item_amount, advance, interest, installments, interest_type=interest_type)
-            self.result_label.config(text=f"EMI Amount: ₹{self.emi_data['installment_amount']}")
+            self.result_label.config(text="")
+            self.finance_amount_value.config(text=f"{self.emi_data['finance_amount']:.2f}")
+            self.installment_amount_value.config(text=f"{self.emi_data['installment_amount']:.2f}")
+            self.final_amount_value.config(text=f"{self.emi_data['final_amount']:.2f}")
         except Exception:
-            messagebox.showerror("Error", "Invalid item/EMI values")
+            self.emi_data = None
+            if hasattr(self, "finance_amount_value"):
+                self.finance_amount_value.config(text="0.00")
+                self.installment_amount_value.config(text="0.00")
+                self.final_amount_value.config(text="0.00")
 
     def add_address_dialog(self):
         def save():
@@ -250,11 +387,11 @@ class CustomerItemUI:
     # ================= SAVE EVERYTHING =================
     def save_all(self):
         if not self.emi_data:
-            messagebox.showerror("Error", "Calculate EMI first")
-            return
+            self.calculate_emi()
+            if not self.emi_data:
+                messagebox.showerror("Error", "Invalid item/EMI values")
+                return
 
-        # Save Customer
-        # parse selected address
         address_val = self.address_cb.get()
         address_id = None
         address_text = None
@@ -274,40 +411,37 @@ class CustomerItemUI:
             except Exception:
                 village_id = None
 
-        # Validate entry date
         entry_date_str = None
-        entry_date_val = self.date_entry.get().strip() if hasattr(self, 'date_entry') else ''
+        entry_date_val = self.date_entry.get().strip() if hasattr(self, "date_entry") else ""
         if entry_date_val:
             try:
                 try:
-                    # Try DD-MM-YYYY first
                     parsed_date = datetime.strptime(entry_date_val, "%d-%m-%Y")
-                    entry_date_str = parsed_date.strftime('%Y-%m-%d')
+                    entry_date_str = parsed_date.strftime("%Y-%m-%d")
                 except ValueError:
-                    # Try YYYY-MM-DD
                     datetime.strptime(entry_date_val, "%Y-%m-%d")
                     entry_date_str = entry_date_val
             except ValueError:
                 messagebox.showerror("Error", "Entry Date must be DD-MM-YYYY or YYYY-MM-DD")
                 return
 
+        customer_name = self.name_entry.get().strip()
+        customer_phone = self.mobile_no_entry.get().strip() or self.phone_entry.get().strip()
+
         customer_id = add_customer(
-            name=self.name_entry.get(),
-            phone=self.phone_entry.get(),
+            name=customer_name,
+            phone=customer_phone,
             address=address_text,
             remarks=self.remarks_entry.get(),
             address_id=address_id,
             village_id=village_id,
-            entry_date=entry_date_str
+            entry_date=entry_date_str,
         )
 
-        # Save Item
         start_date = date.today()
         if entry_date_str:
-            # Use the provided entry_date as item start_date
             start_date = date.fromisoformat(entry_date_str)
 
-        # Validate item fields before saving
         brand = self.entries["Brand"].get().strip()
         model = self.entries["Model"].get().strip()
         item_amount_str = self.entries["Item Amount"].get().strip()
@@ -317,7 +451,6 @@ class CustomerItemUI:
         payment_date_str = self.entries["Payment Date"].get().strip()
         interest_type = self.interest_type_cb.get().upper()
 
-        # Check required fields
         if not brand:
             messagebox.showerror("Validation Error", "Brand is required")
             return
@@ -341,7 +474,6 @@ class CustomerItemUI:
             messagebox.showerror("Validation Error", "Payment Date is required for ONE-TIME mode")
             return
 
-        # Validate numeric fields
         try:
             item_amount = float(item_amount_str)
         except ValueError:
@@ -366,7 +498,6 @@ class CustomerItemUI:
             messagebox.showerror("Validation Error", "Number of Installments must be a valid whole number")
             return
 
-        # Validate ranges and logic
         if item_amount <= 0:
             messagebox.showerror("Validation Error", "Item Amount must be greater than 0")
             return
@@ -383,27 +514,24 @@ class CustomerItemUI:
             messagebox.showerror("Validation Error", "Number of Installments must be greater than 0")
             return
 
-        # Parse payment date for ONE-TIME
         start_date = date.today()
         if self.mode_cb.get() == "ONE-TIME":
             try:
                 try:
-                    start_date = datetime.strptime(payment_date_str, '%d-%m-%Y').date()
+                    start_date = datetime.strptime(payment_date_str, "%d-%m-%Y").date()
                 except ValueError:
                     start_date = date.fromisoformat(payment_date_str)
             except Exception:
                 messagebox.showerror("Validation Error", "Payment Date must be DD-MM-YYYY or YYYY-MM-DD")
                 return
         elif entry_date_str:
-            # Use the provided entry_date as item start_date
             start_date = date.fromisoformat(entry_date_str)
 
-        # Validate interest rate based on type
-        if interest_type.startswith('P'):  # PERCENT
+        if interest_type.startswith("P"):
             if not (0 <= interest_rate <= 100):
                 messagebox.showerror("Validation Error", "Interest Rate (Percent) must be between 0 and 100")
                 return
-        else:  # ABSOLUTE
+        else:
             if interest_rate < 0:
                 messagebox.showerror("Validation Error", "Interest Amount must be non-negative")
                 return
@@ -412,8 +540,8 @@ class CustomerItemUI:
             customer_id=customer_id,
             brand=brand,
             model=model,
-            serial_no=None,
-            invoice_no=None,
+            serial_no=self.serial_no_entry.get().strip() or None,
+            invoice_no=self.invoice_no_entry.get().strip() or None,
             item_amount=item_amount,
             advance_amount=advance_amount,
             finance_amount=self.emi_data["finance_amount"],
@@ -422,16 +550,15 @@ class CustomerItemUI:
             installment_mode=self.mode_cb.get(),
             total_installments=total_installments,
             installment_amount=self.emi_data["installment_amount"],
-            start_date=start_date
+            start_date=start_date,
         )
 
-        # Save Guarantors
         for g in self.guarantor_entries:
             add_guarantor(
                 customer_id,
                 g["name"].get(),
                 g["phone"].get(),
-                g["address"].get()
+                g["address"].get(),
             )
 
         messagebox.showinfo("Success", "Customer, Item & Guarantor(s) added successfully")

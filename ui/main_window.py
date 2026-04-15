@@ -123,7 +123,7 @@ class MainWindow:
         buttons = [
             ("🏠 Home", self.show_home),
             ("👥 Customers", self.open_customers),
-            ("📊 Records", self.open_items),   # renamed logically
+            ("� Records", self.open_items),   # renamed logically
             ("💰 Payments", self.open_payments),
             ("➕ Record Payment", self.open_record_payment),
             ("🚪 Exit", self.root.quit)
@@ -218,7 +218,7 @@ class MainWindow:
         ).pack(pady=(0, 10))
 
         actions = [
-            ("➕ Installment Cases", self.open_customers),
+            ("➕ Installment Cases", self.add_customer),
             ("🔍 Due payments", self.open_payments),
             ("💰 Credit Cases", self.open_record_payment),
             ("📊 Due installments", self.open_items),
