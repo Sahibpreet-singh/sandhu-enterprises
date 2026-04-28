@@ -1,8 +1,7 @@
 import os
 import sys
 
-# Ensure project root is on sys.path so package imports like `database.*` work when
-# the script is executed directly (python database/migrate.py) or via `-m`.
+# Ensure project root is on sys.path
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
@@ -10,130 +9,156 @@ if PROJECT_ROOT not in sys.path:
 from database.db_connection import get_connection
 
 
+# -------------------------------
+# Utility Functions
+# -------------------------------
+
 def table_exists(conn, table_name):
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = %s AND table_name = %s",
-        (conn.database, table_name)
-    )
-    exists = cursor.fetchone()[0] > 0
-    cursor.close()
-    return exists
+    with conn.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT COUNT(*)
+            FROM information_schema.tables
+            WHERE table_schema = %s AND table_name = %s
+            """,
+            (conn.database, table_name)
+        )
+        return cursor.fetchone()[0] > 0
 
 
 def column_exists(conn, table_name, column_name):
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = %s AND table_name = %s AND column_name = %s",
-        (conn.database, table_name, column_name)
-    )
-    exists = cursor.fetchone()[0] > 0
-    cursor.close()
-    return exists
+    with conn.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT COUNT(*)
+            FROM information_schema.columns
+            WHERE table_schema = %s 
+              AND table_name = %s 
+              AND column_name = %s
+            """,
+            (conn.database, table_name, column_name)
+        )
+        return cursor.fetchone()[0] > 0
 
+
+def execute_query(conn, query, message):
+    with conn.cursor() as cursor:
+        cursor.execute(query)
+    print(message)
+
+
+# -------------------------------
+# Migration Logic
+# -------------------------------
 
 def run_migration():
     conn = get_connection()
+
     try:
-        # Addresses table
-        if not table_exists(conn, 'addresses'):
-            cur = conn.cursor()
-            cur.execute(
-                """
+        print("\n🚀 Starting Database Migration...\n")
+
+        # -------------------------------
+        # Tables Creation
+        # -------------------------------
+
+        if not table_exists(conn, "addresses"):
+            execute_query(conn, """
                 CREATE TABLE addresses (
                     address_id INT AUTO_INCREMENT PRIMARY KEY,
                     address TEXT
                 )
-                """
-            )
-            cur.close()
-            print('Created table: addresses')
+            """, "✅ Created table: addresses")
         else:
-            print('Table already exists: addresses')
+            print("⚠️  Table already exists: addresses")
 
-        # Villages table
-        if not table_exists(conn, 'villages'):
-            cur = conn.cursor()
-            cur.execute(
-                """
+        if not table_exists(conn, "villages"):
+            execute_query(conn, """
                 CREATE TABLE villages (
                     village_id INT AUTO_INCREMENT PRIMARY KEY,
                     name VARCHAR(255)
                 )
-                """
+            """, "✅ Created table: villages")
+        else:
+            print("⚠️  Table already exists: villages")
+
+        # -------------------------------
+        # Customers Table Updates
+        # -------------------------------
+
+        if not column_exists(conn, "customers", "address_id"):
+            execute_query(conn,
+                "ALTER TABLE customers ADD COLUMN address_id INT NULL",
+                "✅ Added: customers.address_id"
             )
-            cur.close()
-            print('Created table: villages')
         else:
-            print('Table already exists: villages')
+            print("⚠️  Column exists: customers.address_id")
 
-        # Add columns to customers if missing
-        if not column_exists(conn, 'customers', 'address_id'):
-            cur = conn.cursor()
-            cur.execute("ALTER TABLE customers ADD COLUMN address_id INT NULL")
-            cur.close()
-            print('Added column: customers.address_id')
+        if not column_exists(conn, "customers", "village_id"):
+            execute_query(conn,
+                "ALTER TABLE customers ADD COLUMN village_id INT NULL",
+                "✅ Added: customers.village_id"
+            )
         else:
-            print('Column already exists: customers.address_id')
+            print("⚠️  Column exists: customers.village_id")
 
-        if not column_exists(conn, 'customers', 'village_id'):
-            cur = conn.cursor()
-            cur.execute("ALTER TABLE customers ADD COLUMN village_id INT NULL")
-            cur.close()
-            print('Added column: customers.village_id')
+        if not column_exists(conn, "customers", "entry_date"):
+            execute_query(conn,
+                "ALTER TABLE customers ADD COLUMN entry_date DATE NULL",
+                "✅ Added: customers.entry_date"
+            )
         else:
-            print('Column already exists: customers.village_id')
+            print("⚠️  Column exists: customers.entry_date")
 
-        if not column_exists(conn, 'customers', 'entry_date'):
-            cur = conn.cursor()
-            cur.execute("ALTER TABLE customers ADD COLUMN entry_date DATE NULL")
-            cur.close()
-            print('Added column: customers.entry_date')
-        else:
-            print('Column already exists: customers.entry_date')
+        # -------------------------------
+        # Items Table Updates
+        # -------------------------------
 
-        # Add interest_type to items if missing
-        if not column_exists(conn, 'items', 'interest_type'):
-            cur = conn.cursor()
-            cur.execute("ALTER TABLE items ADD COLUMN interest_type VARCHAR(20) DEFAULT 'PERCENT' NULL")
-            cur.close()
-            print('Added column: items.interest_type')
+        if not column_exists(conn, "items", "interest_type"):
+            execute_query(conn,
+                "ALTER TABLE items ADD COLUMN interest_type VARCHAR(20) DEFAULT 'PERCENT' NULL",
+                "✅ Added: items.interest_type"
+            )
         else:
-            print('Column already exists: items.interest_type')
+            print("⚠️  Column exists: items.interest_type")
 
-        if not column_exists(conn, 'items', 'serial_no'):
-            cur = conn.cursor()
-            cur.execute("ALTER TABLE items ADD COLUMN serial_no VARCHAR(255) NULL")
-            cur.close()
-            print('Added column: items.serial_no')
+        if not column_exists(conn, "items", "serial_no"):
+            execute_query(conn,
+                "ALTER TABLE items ADD COLUMN serial_no VARCHAR(255) NULL",
+                "✅ Added: items.serial_no"
+            )
         else:
-            print('Column already exists: items.serial_no')
+            print("⚠️  Column exists: items.serial_no")
 
-        if not column_exists(conn, 'items', 'invoice_no'):
-            cur = conn.cursor()
-            cur.execute("ALTER TABLE items ADD COLUMN invoice_no VARCHAR(255) NULL")
-            cur.close()
-            print('Added column: items.invoice_no')
+        if not column_exists(conn, "items", "invoice_no"):
+            execute_query(conn,
+                "ALTER TABLE items ADD COLUMN invoice_no VARCHAR(255) NULL",
+                "✅ Added: items.invoice_no"
+            )
         else:
-            print('Column already exists: items.invoice_no')
+            print("⚠️  Column exists: items.invoice_no")
 
-        if not column_exists(conn, 'items', 'status'):
-            cur = conn.cursor()
-            cur.execute("ALTER TABLE items ADD COLUMN status VARCHAR(20) DEFAULT 'ACTIVE' NULL")
-            cur.close()
-            print('Added column: items.status')
+        if not column_exists(conn, "items", "status"):
+            execute_query(conn,
+                "ALTER TABLE items ADD COLUMN status VARCHAR(20) DEFAULT 'ACTIVE' NULL",
+                "✅ Added: items.status"
+            )
         else:
-            print('Column already exists: items.status')
+            print("⚠️  Column exists: items.status")
 
         conn.commit()
+        print("\n🎉 Migration Completed Successfully!\n")
+
+    except Exception as e:
+        conn.rollback()
+        print("\n❌ Migration Failed:", e)
+
     finally:
         conn.close()
 
 
-if __name__ == '__main__':
-    print('Running DB migration...')
-    try:
-        run_migration()
-        print('Migration completed.')
-    except Exception as e:
-        print('Migration failed:', e)
+# -------------------------------
+# Entry Point
+# -------------------------------
+
+if __name__ == "__main__":
+    run_migration()
